@@ -1,0 +1,24 @@
+{
+  "name": "kairos",
+  "version": "1.0.0",
+  "description": "KAIROS - Precision Ski Fitting - Sistema premium de optimización de configuración de equipos de esquí",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [
+    "ski",
+    "rental",
+    "calculator",
+    "din",
+    "kairos",
+    "vite"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "vite": "^7.3.0"
+  }
+}

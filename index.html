@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KAIROS - Precision Ski Fitting</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts - Syne & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Selector de Idioma (Acordeón) -->
+    <div class="language-selector">
+        <button type="button" class="lang-toggle-btn" id="langToggle">
+            <span id="currentLang">EN</span>
+            <i class="fas fa-chevron-down"></i>
+        </button>
+        <div class="lang-dropdown" id="langDropdown">
+            <button type="button" class="lang-option" data-lang="es">
+                <span>ES</span>
+                <span class="lang-name">Español</span>
+            </button>
+            <button type="button" class="lang-option active" data-lang="en">
+                <span>EN</span>
+                <span class="lang-name">English</span>
+            </button>
+            <button type="button" class="lang-option" data-lang="pt">
+                <span>PT</span>
+                <span class="lang-name">Português</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <!-- Header -->
+        <header class="header-section">
+            <img src="/src/assets/logo.svg" alt="KAIROS" class="logo-img">
+            <p class="subtitle" data-i18n="subtitle">Precision Ski Fitting</p>
+        </header>
+        
+        <form id="skiRentalForm">
+            <!-- Inputs Principales -->
+            <div class="input-group-custom">
+                <label class="form-label" for="height" data-i18n="height">Height</label>
+                <div class="input-group">
+                    <input 
+                        type="number" 
+                        class="form-control form-control-custom input-with-toggle" 
+                        id="height" 
+                        data-i18n-placeholder="heightPlaceholder"
+                        placeholder="Enter your height"
+                        step="0.1"
+                        required
+                    >
+                    <button type="button" class="input-group-text input-group-text-custom toggle-btn" id="heightToggle">
+                        <span id="heightUnit">CM</span> <span class="separator">|</span> <span class="inactive">FT</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="input-group-custom">
+                <label class="form-label" for="weight" data-i18n="weight">Weight</label>
+                <div class="input-group">
+                    <input 
+                        type="number" 
+                        class="form-control form-control-custom input-with-toggle" 
+                        id="weight" 
+                        data-i18n-placeholder="weightPlaceholder"
+                        placeholder="Enter your weight"
+                        step="0.1"
+                        required
+                    >
+                    <button type="button" class="input-group-text input-group-text-custom toggle-btn" id="weightToggle">
+                        <span id="weightUnit">KG</span> <span class="separator">|</span> <span class="inactive">LBS</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="input-group-custom">
+                <label class="form-label" for="soleLength" data-i18n="soleLength">Boot Sole Length</label>
+                <div class="input-group">
+                    <span class="input-group-text input-group-text-prefix">
+                        <i class="fas fa-shoe-prints"></i>
+                    </span>
+                    <input 
+                        type="number" 
+                        class="form-control form-control-custom" 
+                        id="soleLength" 
+                        data-i18n-placeholder="soleLengthPlaceholder"
+                        placeholder="Enter length in mm"
+                        step="1"
+                        required
+                    >
+                    <span class="input-group-text input-group-text-custom" style="cursor: default; min-width: 60px;">
+                        mm
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Sección Advanced Metrics -->
+            <div class="advanced-section">
+                <button type="button" class="toggle-advanced-btn" id="toggleAdvanced">
+                    <span data-i18n="advancedOptions">Adjust skier profile</span>
+                    <i class="fas fa-plus"></i>
+                </button>
+                
+                <div class="advanced-content" id="advancedContent">
+                    <div class="input-group-custom">
+                        <label class="form-label" data-i18n="age">Age</label>
+                        <div class="age-options">
+                            <button type="button" class="age-option" data-age="under18">
+                                &lt; 18
+                            </button>
+                            <button type="button" class="age-option active" data-age="18-50">
+                                18 - 50
+                            </button>
+                            <button type="button" class="age-option" data-age="over50">
+                                50 +
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="skill-level-section">
+                        <label class="form-label" data-i18n="skillLevel">Ski Level</label>
+                        <div class="skill-level-options">
+                            <button type="button" class="skill-level-card active" data-level="1">
+                                <div class="level-type">TYPE I</div>
+                                <div class="level-label" data-i18n="beginner">Beginner</div>
+                            </button>
+                            <button type="button" class="skill-level-card" data-level="2">
+                                <div class="level-type">TYPE II</div>
+                                <div class="level-label" data-i18n="intermediate">Intermediate</div>
+                            </button>
+                            <button type="button" class="skill-level-card" data-level="3">
+                                <div class="level-type">TYPE III</div>
+                                <div class="level-label" data-i18n="expert">Expert</div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer CTA -->
+            <button type="submit" class="btn btn-primary-custom" id="calculateBtn" data-i18n="calculateBtn">
+                CALCULATE DIN
+            </button>
+        </form>
+        
+        <!-- Footer -->
+        <footer class="app-footer">
+            <button type="button" class="footer-link" id="aboutBtn" data-i18n="aboutUs">About Us</button>
+        </footer>
+    </div>
+
+    <!-- Modal Quiénes Somos -->
+    <div class="modal-overlay" id="aboutModal">
+        <div class="modal-content">
+            <button type="button" class="modal-close" id="closeAboutModal">
+                <i class="fas fa-times"></i>
+            </button>
+            <h2 class="modal-title" data-i18n="aboutTitle">About KAIROS</h2>
+            <div class="modal-body">
+                <p data-i18n="aboutText1">
+                    KAIROS is a premium ski equipment configuration optimization platform, designed for demanding skiers seeking perfect precision in their equipment.
+                </p>
+                <p data-i18n="aboutText2">
+                    We use advanced algorithms and cutting-edge technology to calculate the optimal DIN setting and recommend the ideal ski equipment for each user.
+                </p>
+                <div class="developers-section">
+                    <h3 data-i18n="developers">Developers</h3>
+                    <div class="developers-list">
+                        <div class="developer">
+                            <i class="fas fa-code"></i>
+                            <span>Benjamín Méndez</span>
+                            <div class="developer-links">
+                                <a href="https://www.instagram.com/benjaminm_0/" target="_blank" rel="noopener noreferrer" class="social-link" title="Instagram">
+                                    <i class="fab fa-instagram"></i>
+                                </a>
+                                <a href="https://www.linkedin.com/in/benjamin-mendez-09427a2a4/" target="_blank" rel="noopener noreferrer" class="social-link" title="LinkedIn">
+                                    <i class="fab fa-linkedin"></i>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="developer">
+                            <i class="fas fa-code"></i>
+                            <span>Claudio Díaz</span>
+                            <div class="developer-links">
+                                <a href="https://www.instagram.com/cldiazc/" target="_blank" rel="noopener noreferrer" class="social-link" title="Instagram">
+                                    <i class="fab fa-instagram"></i>
+                                </a>
+                                <a href="https://www.linkedin.com/in/claudio-ismael-diaz-consuegra-9083b8258" target="_blank" rel="noopener noreferrer" class="social-link" title="LinkedIn">
+                                    <i class="fab fa-linkedin"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Resultados del Cálculo -->
+    <div class="modal-overlay" id="resultsModal">
+        <div class="modal-content">
+            <button type="button" class="modal-close" id="closeResultsModal">
+                <i class="fas fa-times"></i>
+            </button>
+            <h2 class="modal-title" data-i18n="resultsTitle">DIN Calculation Result</h2>
+            <div class="modal-body">
+                <div class="results-section">
+                    <div class="result-item">
+                        <span class="result-label" data-i18n="resultHeight">Height:</span>
+                        <span class="result-value" id="resultHeight">-</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label" data-i18n="resultWeight">Weight:</span>
+                        <span class="result-value" id="resultWeight">-</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label" data-i18n="resultSoleLength">Boot Sole Length:</span>
+                        <span class="result-value" id="resultSoleLength">-</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label" data-i18n="resultAge">Age:</span>
+                        <span class="result-value" id="resultAge">-</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label" data-i18n="resultLevel">Level:</span>
+                        <span class="result-value" id="resultLevel">-</span>
+                    </div>
+                    <div class="result-din">
+                        <div class="din-label" data-i18n="dinValue">Recommended DIN Value</div>
+                        <div class="din-number" id="dinValue">-</div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-secondary-custom" id="calculateAnotherBtn" data-i18n="calculateAnother">
+                    Calculate Another DIN
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- JavaScript principal (Vite maneja el módulo) -->
+    <script type="module" src="/src/main.js"></script>
+</body>
+</html>
