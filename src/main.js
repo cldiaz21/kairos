@@ -426,6 +426,19 @@ function getIndicatorMatrix() {
 
 // Función para calcular DIN (lógica real)
 function calculateDIN(heightInCm, weightInKg, soleLength, age, level) {
+    // Validaciones iniciales
+    if (!heightInCm || heightInCm <= 0) {
+        return { error: '❌ Error en ALTURA: Por favor ingresa una altura válida mayor a 0 cm.' };
+    }
+    
+    if (!weightInKg || weightInKg <= 0) {
+        return { error: '❌ Error en PESO: Por favor ingresa un peso válido mayor a 0 kg.' };
+    }
+    
+    if (!soleLength || soleLength <= 0) {
+        return { error: '❌ Error en LONGITUD DE SUELA: Por favor ingresa una longitud de suela válida mayor a 0 mm.' };
+    }
+    
     // Convertir altura a pulgadas totales
     const heightInInches = heightInCm / 2.54;
     const heightFeet = Math.floor(heightInInches / 12);
@@ -434,6 +447,13 @@ function calculateDIN(heightInCm, weightInKg, soleLength, age, level) {
     
     // Convertir peso a libras
     const weightInLbs = converters.kgToLbs(weightInKg);
+    
+    // Validar peso mínimo
+    if (weightInLbs < 22) {
+        return { 
+            error: `❌ Error en PESO: El peso ingresado (${weightInKg.toFixed(1)} kg / ${weightInLbs.toFixed(1)} lbs) es demasiado bajo. El peso mínimo requerido es de 22 lbs (aproximadamente 10 kg). Por favor verifica el campo de PESO.` 
+        };
+    }
     
     // Convertir edad a número (aproximado para el cálculo)
     let ageValue;
@@ -449,8 +469,11 @@ function calculateDIN(heightInCm, weightInKg, soleLength, age, level) {
     const rowH = calculateHeightRow(totalHeightInches);
     const rowW = calculateWeightRow(weightInLbs);
     
-    if (rowW === -1) {
-        return { error: 'Invalid weight (must be at least 22 lbs)' };
+    // Validar altura (debe estar en rango válido)
+    if (totalHeightInches < 59) {
+        return { 
+            error: `❌ Error en ALTURA: La altura ingresada (${heightInCm.toFixed(1)} cm / ${totalHeightInches.toFixed(0)} in) es demasiado baja. La altura mínima requerida es de aproximadamente 59 pulgadas (150 cm). Por favor verifica el campo de ALTURA.` 
+        };
     }
     
     const agemod = calculateAgeModifier(ageValue);
@@ -466,12 +489,17 @@ function calculateDIN(heightInCm, weightInKg, soleLength, age, level) {
     
     const col = calculateSoleLengthColumn(soleLength);
     
-    if (col === -1) {
-        return { error: 'Invalid sole length' };
+    // Validar longitud de suela
+    if (soleLength < 231) {
+        return { 
+            error: `❌ Error en LONGITUD DE SUELA: La longitud de suela ingresada (${soleLength} mm) es demasiado baja. La longitud mínima requerida es de 231 mm. Por favor verifica el campo de LONGITUD DE SUELA (Boot Sole Length).` 
+        };
     }
     
     if (row < 1) {
-        return { error: 'Calculated row is too low, unable to determine skier code.' };
+        return { 
+            error: `❌ Error en la combinación de métricas: La combinación de altura (${heightInCm.toFixed(1)} cm), peso (${weightInKg.toFixed(1)} kg) y edad no permite calcular un código de esquiador válido. Por favor verifica los campos de ALTURA, PESO y EDAD.` 
+        };
     }
     
     // Calcular código de esquiador
@@ -485,19 +513,88 @@ function calculateDIN(heightInCm, weightInKg, soleLength, age, level) {
     const indMat = getIndicatorMatrix();
     let indicator = 'N/A';
     
+    // Validar que row y col estén dentro de los límites válidos
+    if (row < 1 || row > 16) {
+        return { 
+            error: `❌ Error en el cálculo: El código de esquiador calculado (fila ${row}) está fuera del rango válido. Esto puede deberse a una combinación extrema de ALTURA, PESO, EDAD o NIVEL. Por favor verifica todos los campos.` 
+        };
+    }
+    
+    if (col < 1 || col > 8) {
+        return { 
+            error: `❌ Error en LONGITUD DE SUELA: La longitud de suela ingresada (${soleLength} mm) está fuera del rango válido. Por favor verifica el campo de LONGITUD DE SUELA (Boot Sole Length). El rango válido es entre 231 mm y 350+ mm.` 
+        };
+    }
+    
     if (skierCode !== 'N/A' && col !== -1) {
-        if (row - 1 < indMat.length && col - 1 < indMat[0].length) {
-            indicator = indMat[row - 1][col - 1];
+        const rowIndex = row - 1; // Convertir a índice 0-based
+        const colIndex = col - 1; // Convertir a índice 0-based
+        
+        if (rowIndex >= 0 && rowIndex < indMat.length && colIndex >= 0 && colIndex < indMat[rowIndex].length) {
+            indicator = indMat[rowIndex][colIndex];
+        } else {
+            return { 
+                error: `❌ Error interno en el cálculo: Índice de matriz fuera de rango. Por favor verifica los campos de ALTURA, PESO, LONGITUD DE SUELA, EDAD y NIVEL.` 
+            };
         }
     }
     
-    // Si el indicador es una cadena vacía o no válido, devolver error
-    if (indicator === '' || indicator === 'N/A') {
-        return { error: 'Unable to determine DIN setting from indicator matrix.' };
+    // Si el indicador es una cadena vacía, significa que esa combinación no tiene un valor DIN válido
+    // Esto puede ocurrir cuando la combinación de skier code y sole length no está en la tabla
+    if (indicator === '' || indicator === 'N/A' || indicator === null || indicator === undefined) {
+        console.error('DIN Calculation Debug:', {
+            heightInCm,
+            weightInKg,
+            soleLength,
+            age,
+            level,
+            totalHeightInches,
+            weightInLbs,
+            rowH,
+            rowW,
+            agemod,
+            levmod,
+            row,
+            col,
+            skierCode,
+            indicator
+        });
+        
+        // Determinar qué campo puede estar causando el problema
+        let problemField = '';
+        if (rowH > 13 || rowW > 13) {
+            problemField = 'ALTURA o PESO';
+        } else if (col > 8) {
+            problemField = 'LONGITUD DE SUELA';
+        } else {
+            problemField = 'la combinación de ALTURA, PESO y LONGITUD DE SUELA';
+        }
+        
+        return { 
+            error: `❌ No se puede determinar el valor DIN: La combinación de métricas ingresadas no tiene un valor DIN válido en la tabla de referencia.\n\n` +
+                   `Código de Esquiador: ${skierCode}\n` +
+                   `Columna de Longitud de Suela: ${col}\n\n` +
+                   `Por favor verifica ${problemField}. Es posible que necesites ajustar alguno de estos valores para obtener un resultado válido.` 
+        };
+    }
+    
+    // Validar que el indicador sea un número válido
+    const dinValue = parseFloat(indicator);
+    if (isNaN(dinValue)) {
+        console.error('DIN Calculation Error - Invalid indicator:', {
+            row,
+            col,
+            skierCode,
+            indicator,
+            indicatorType: typeof indicator
+        });
+        return { 
+            error: `❌ Error en el cálculo del DIN: El valor obtenido de la tabla no es válido. Por favor verifica los campos de ALTURA, PESO, LONGITUD DE SUELA, EDAD y NIVEL.` 
+        };
     }
     
     return {
-        din: parseFloat(indicator),
+        din: dinValue,
         skierCode: skierCode,
         column: col,
         row: row,
