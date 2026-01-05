@@ -136,6 +136,9 @@
                         mm
                     </span>
                 </div>
+                <button type="button" class="view-measures-btn" id="viewMeasuresBtn" data-i18n="viewMeasures">
+                    <i class="fas fa-ruler"></i> <span>View Measures</span>
+                </button>
             </div>
             
             <!-- Sección Advanced Metrics -->
@@ -232,6 +235,21 @@
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Tabla de Medidas -->
+    <div class="modal-overlay" id="measuresModal">
+        <div class="modal-content">
+            <button type="button" class="modal-close" id="closeMeasuresModal">
+                <i class="fas fa-times"></i>
+            </button>
+            <h2 class="modal-title" data-i18n="measuresTitle">Boot Sole Length Measures</h2>
+            <div class="modal-body">
+                <div class="measures-image-container">
+                    <img src="/src/assets/table.png" alt="Boot Sole Length Measures Table" class="measures-image">
                 </div>
             </div>
         </div>

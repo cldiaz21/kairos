@@ -44,7 +44,9 @@ const translations = {
         resultAge: 'Edad:',
         resultLevel: 'Nivel:',
         dinValue: 'Valor DIN Recomendado',
-        calculateAnother: 'Calcular otro DIN'
+        calculateAnother: 'Calcular otro DIN',
+        viewMeasures: 'Ver Medidas',
+        measuresTitle: 'Tabla de Medidas de Longitud de Suela'
     },
     en: {
         subtitle: 'Precision Ski Fitting',
@@ -75,7 +77,9 @@ const translations = {
         resultAge: 'Age:',
         resultLevel: 'Level:',
         dinValue: 'Recommended DIN Value',
-        calculateAnother: 'Calculate Another DIN'
+        calculateAnother: 'Calculate Another DIN',
+        viewMeasures: 'View Measures',
+        measuresTitle: 'Boot Sole Length Measures'
     },
     pt: {
         subtitle: 'Precision Ski Fitting',
@@ -106,7 +110,9 @@ const translations = {
         resultAge: 'Idade:',
         resultLevel: 'Nível:',
         dinValue: 'Valor DIN Recomendado',
-        calculateAnother: 'Calcular outro DIN'
+        calculateAnother: 'Calcular outro DIN',
+        viewMeasures: 'Ver Medidas',
+        measuresTitle: 'Tabela de Medidas de Comprimento da Sola'
     }
 };
 
@@ -160,6 +166,7 @@ function init() {
     setupLanguageSelector();
     setupModal();
     setupResultsModal();
+    setupMeasuresModal();
     // Actualizar traducciones al inicializar
     updateTranslations();
     console.log('KAIROS: Aplicación inicializada');
@@ -250,6 +257,33 @@ function setupModal() {
 }
 
 // Modal de Resultados
+function setupMeasuresModal() {
+    const viewMeasuresBtn = document.getElementById('viewMeasuresBtn');
+    const measuresModal = document.getElementById('measuresModal');
+    const closeMeasuresBtn = document.getElementById('closeMeasuresModal');
+    
+    if (viewMeasuresBtn && measuresModal) {
+        viewMeasuresBtn.addEventListener('click', () => {
+            measuresModal.classList.add('show');
+        });
+    }
+    
+    if (closeMeasuresBtn && measuresModal) {
+        closeMeasuresBtn.addEventListener('click', () => {
+            measuresModal.classList.remove('show');
+        });
+    }
+    
+    // Cerrar al hacer clic fuera del modal
+    if (measuresModal) {
+        measuresModal.addEventListener('click', (e) => {
+            if (e.target === measuresModal) {
+                measuresModal.classList.remove('show');
+            }
+        });
+    }
+}
+
 function setupResultsModal() {
     const resultsModal = document.getElementById('resultsModal');
     const closeResultsBtn = document.getElementById('closeResultsModal');
@@ -578,8 +612,30 @@ function setupHeightToggle() {
 function setupHeightInputs() {
     const heightFeetInput = document.getElementById('heightFeet');
     const heightInchesInput = document.getElementById('heightInches');
+    const heightInputGroup = document.getElementById('heightInputGroupFtIn');
     
-    if (!heightFeetInput || !heightInchesInput) return;
+    if (!heightFeetInput || !heightInchesInput || !heightInputGroup) return;
+    
+    // Agregar/quitar clase focused cuando se hace focus/blur
+    heightFeetInput.addEventListener('focus', () => {
+        heightInputGroup.classList.add('focused');
+    });
+    
+    heightFeetInput.addEventListener('blur', () => {
+        if (document.activeElement !== heightInchesInput) {
+            heightInputGroup.classList.remove('focused');
+        }
+    });
+    
+    heightInchesInput.addEventListener('focus', () => {
+        heightInputGroup.classList.add('focused');
+    });
+    
+    heightInchesInput.addEventListener('blur', () => {
+        if (document.activeElement !== heightFeetInput) {
+            heightInputGroup.classList.remove('focused');
+        }
+    });
     
     // Auto-avanzar de ft a inch cuando se presiona Enter
     heightFeetInput.addEventListener('keydown', (e) => {

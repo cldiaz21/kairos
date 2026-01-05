@@ -133,8 +133,19 @@ body {
 /* Height Input Group (ft e inch) */
 .height-input-group {
     display: flex;
-    gap: 12px;
     align-items: center;
+    background: var(--input-bg);
+    border-radius: 12px 0 12px 0;
+    padding: 0;
+    backdrop-filter: blur(10px);
+    border: none;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.height-input-group.focused {
+    background: rgba(51, 65, 85, 0.7);
+    box-shadow: 0 0 15px var(--glow-cyan);
 }
 
 .height-feet-input,
@@ -143,12 +154,33 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
+    padding: 0 12px;
+    height: 48px;
+    background: transparent;
+}
+
+.height-feet-input {
+    border-right: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .height-feet-input .form-control-custom,
 .height-inches-input .form-control-custom {
     flex: 1;
     text-align: center;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    box-shadow: none;
+    height: 100%;
+}
+
+.height-feet-input .form-control-custom:focus,
+.height-inches-input .form-control-custom:focus {
+    background: transparent;
+    box-shadow: none;
+    outline: none;
+    border: none;
 }
 
 .height-unit-label {
@@ -733,6 +765,52 @@ body {
     letter-spacing: 2px;
 }
 
+.view-measures-btn {
+    margin-top: 12px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    font-weight: 400;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Inter', sans-serif;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+
+.view-measures-btn:hover {
+    color: var(--accent-cyan);
+    text-decoration-color: var(--accent-cyan);
+}
+
+.view-measures-btn i {
+    font-size: 0.875rem;
+}
+
+#measuresModal .modal-content {
+    max-width: 800px;
+}
+
+.measures-image-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px 0;
+}
+
+.measures-image {
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
 .modal-body {
     color: var(--text-secondary);
     line-height: 1.8;
@@ -939,5 +1017,14 @@ body {
     .modal-title {
         font-size: 1.5rem;
         padding-right: 40px;
+    }
+    
+    .measures-image-container {
+        padding: 10px 0;
+    }
+    
+    .view-measures-btn {
+        font-size: 0.8rem;
+        padding: 8px 12px;
     }
 }
