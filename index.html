@@ -52,19 +52,49 @@
         <form id="skiRentalForm">
             <!-- Inputs Principales -->
             <div class="input-group-custom">
-                <label class="form-label" for="height" data-i18n="height">Height</label>
-                <div class="input-group">
+                <label class="form-label" data-i18n="height">Height</label>
+                <!-- Sistema americano (ft/in) -->
+                <div class="height-input-group" id="heightInputGroupFtIn">
+                    <div class="height-feet-input">
+                        <input 
+                            type="number" 
+                            class="form-control form-control-custom" 
+                            id="heightFeet" 
+                            placeholder="Ft"
+                            min="0"
+                            max="10"
+                            step="1"
+                        >
+                        <span class="height-unit-label">ft</span>
+                    </div>
+                    <div class="height-inches-input">
+                        <input 
+                            type="number" 
+                            class="form-control form-control-custom" 
+                            id="heightInches" 
+                            placeholder="In"
+                            min="0"
+                            max="11"
+                            step="1"
+                        >
+                        <span class="height-unit-label">in</span>
+                    </div>
+                    <button type="button" class="input-group-text input-group-text-custom toggle-btn" id="heightToggle">
+                        <span id="heightUnit">FT/IN</span> <span class="separator">|</span> <span class="inactive">CM</span>
+                    </button>
+                </div>
+                <!-- Sistema métrico (cm) -->
+                <div class="input-group height-input-group-cm" id="heightInputGroupCm" style="display: none;">
                     <input 
                         type="number" 
                         class="form-control form-control-custom input-with-toggle" 
-                        id="height" 
-                        data-i18n-placeholder="heightPlaceholder"
-                        placeholder="Enter your height"
+                        id="heightCm" 
+                        placeholder="Enter height in cm"
+                        min="0"
                         step="0.1"
-                        required
                     >
-                    <button type="button" class="input-group-text input-group-text-custom toggle-btn" id="heightToggle">
-                        <span id="heightUnit">CM</span> <span class="separator">|</span> <span class="inactive">FT</span>
+                    <button type="button" class="input-group-text input-group-text-custom toggle-btn" id="heightToggleCm">
+                        <span id="heightUnitCm">CM</span> <span class="separator">|</span> <span class="inactive">FT/IN</span>
                     </button>
                 </div>
             </div>
@@ -82,7 +112,7 @@
                         required
                     >
                     <button type="button" class="input-group-text input-group-text-custom toggle-btn" id="weightToggle">
-                        <span id="weightUnit">KG</span> <span class="separator">|</span> <span class="inactive">LBS</span>
+                        <span id="weightUnit">LBS</span> <span class="separator">|</span> <span class="inactive">KG</span>
                     </button>
                 </div>
             </div>
@@ -119,11 +149,8 @@
                     <div class="input-group-custom">
                         <label class="form-label" data-i18n="age">Age</label>
                         <div class="age-options">
-                            <button type="button" class="age-option" data-age="under18">
-                                &lt; 18
-                            </button>
-                            <button type="button" class="age-option active" data-age="18-50">
-                                18 - 50
+                            <button type="button" class="age-option active" data-age="10-49">
+                                10 - 49
                             </button>
                             <button type="button" class="age-option" data-age="over50">
                                 50 +

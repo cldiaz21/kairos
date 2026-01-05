@@ -6,9 +6,9 @@ console.log('KAIROS: Módulos cargados correctamente');
 
 // Estado de la aplicación
 const appState = {
-    heightUnit: 'cm',
-    weightUnit: 'kg',
-    selectedAge: '18-50',
+    heightUnit: 'ft', // Sistema americano por defecto
+    weightUnit: 'lbs', // Sistema americano por defecto
+    selectedAge: '10-49',
     selectedLevel: '1',
     currentLang: 'en'
 };
@@ -118,6 +118,13 @@ const converters = {
         return parseFloat((feet + inches / 12).toFixed(2));
     },
     ftToCm: (ft) => parseFloat((ft * 30.48).toFixed(1)),
+    ftInToCm: (ft, inches) => parseFloat((ft * 30.48 + inches * 2.54).toFixed(1)),
+    cmToFtIn: (cm) => {
+        const totalInches = cm / 2.54;
+        const feet = Math.floor(totalInches / 12);
+        const inches = Math.round(totalInches % 12);
+        return { feet, inches };
+    },
     kgToLbs: (kg) => parseFloat((kg * 2.20462).toFixed(1)),
     lbsToKg: (lbs) => parseFloat((lbs * 0.453592).toFixed(1))
 };
@@ -144,6 +151,7 @@ function updateTranslations() {
 function init() {
     console.log('KAIROS: Inicializando aplicación...');
     setupHeightToggle();
+    setupHeightInputs();
     setupWeightToggle();
     setupAdvancedToggle();
     setupAgeOptions();
@@ -271,58 +279,230 @@ function setupResultsModal() {
     }
 }
 
-// Función para calcular DIN (simulación)
+// Función auxiliar para determinar fila/columna basada en rangos
+function _getRowFromRanges(value, ranges) {
+    for (let i = 0; i < ranges.length; i++) {
+        const [threshold, rowNum] = ranges[i];
+        if (value < threshold) {
+            return rowNum;
+        }
+    }
+    return ranges[ranges.length - 1][1]; // Default al último valor si no se cumple ningún threshold
+}
+
+// Calcular fila basada en altura (en pulgadas totales)
+function calculateHeightRow(heightInInches) {
+    const heightRanges = [
+        [59, 8],
+        [62, 9],
+        [66, 10],
+        [71, 11],
+        [77, 12],
+        [Infinity, 13]
+    ];
+    return _getRowFromRanges(heightInInches, heightRanges);
+}
+
+// Calcular fila basada en peso (en libras)
+function calculateWeightRow(weightInLbs) {
+    if (weightInLbs < 22) {
+        return -1; // Error
+    }
+    const weightRanges = [
+        [30, 1],
+        [39, 2],
+        [48, 3],
+        [57, 4],
+        [67, 5],
+        [79, 6],
+        [92, 7],
+        [108, 8],
+        [126, 9],
+        [148, 10],
+        [175, 11],
+        [210, 12],
+        [Infinity, 13]
+    ];
+    return _getRowFromRanges(weightInLbs, weightRanges);
+}
+
+// Calcular modificador de edad
+function calculateAgeModifier(ageValue) {
+    if (ageValue < 10) {
+        return -1;
+    } else if (ageValue < 50) {
+        return 0;
+    } else {
+        return -1;
+    }
+}
+
+// Calcular modificador de nivel
+function calculateLevelModifier(level, weightInLbs) {
+    const lev = parseInt(level);
+    if (lev === 1) {
+        return 0;
+    } else if (lev === 2) {
+        return 1;
+    } else if (lev === 3) {
+        return weightInLbs < 48 ? 1 : 2;
+    }
+    return 0;
+}
+
+// Calcular columna basada en longitud de suela (en mm)
+function calculateSoleLengthColumn(soleLength) {
+    if (soleLength < 0) {
+        return -1; // Error
+    }
+    const slenRanges = [
+        [231, 1],
+        [251, 2],
+        [271, 3],
+        [291, 4],
+        [311, 5],
+        [331, 6],
+        [351, 7],
+        [Infinity, 8]
+    ];
+    return _getRowFromRanges(soleLength, slenRanges);
+}
+
+// Matriz de indicadores DIN
+function getIndicatorMatrix() {
+    return [
+        [0.75, 0.75, 0.75, '', '', '', '', ''],
+        [1, 0.75, 0.75, 0.75, '', '', '', ''],
+        [1.5, 1.25, 1.25, 1, '', '', '', ''],
+        [2, 1.75, 1.5, 1.5, 1.25, '', '', ''],
+        [2.5, 2.25, 2, 1.75, 1.5, 1.5, '', ''],
+        [3, 2.75, 2.5, 2.25, 2, 1.75, 1.75, ''],
+        ['', 3.5, 3, 2.75, 2.5, 2.25, 2, ''],
+        ['', '', 3.5, 3, 3, 2.75, 2.5, ''],
+        ['', '', 4.5, 4, 3.5, 3.5, 3, ''],
+        ['', '', 5.5, 5, 4.5, 4, 3.5, 3],
+        ['', '', 6.5, 6, 5.5, 5, 4.5, 4],
+        ['', '', 7.5, 7, 6.5, 6, 5.5, 5],
+        ['', '', '', 8.5, 8, 7, 6.5, 6],
+        ['', '', '', 10, 9.5, 8.5, 8, 7.5],
+        ['', '', '', 11.5, 11, 10, 9.5, 9],
+        ['', '', '', '', '', 12, 11, 10.5]
+    ];
+}
+
+// Función para calcular DIN (lógica real)
 function calculateDIN(heightInCm, weightInKg, soleLength, age, level) {
-    // Esta es una simulación básica del cálculo DIN
-    // En producción, aquí iría la lógica real del cálculo
+    // Convertir altura a pulgadas totales
+    const heightInInches = heightInCm / 2.54;
+    const heightFeet = Math.floor(heightInInches / 12);
+    const heightInchesRemainder = Math.round(heightInInches % 12);
+    const totalHeightInches = heightFeet * 12 + heightInchesRemainder;
     
-    let baseDIN = 0;
+    // Convertir peso a libras
+    const weightInLbs = converters.kgToLbs(weightInKg);
     
-    // Factor de peso (simplificado)
-    if (weightInKg < 50) baseDIN = 0.75;
-    else if (weightInKg < 60) baseDIN = 1.0;
-    else if (weightInKg < 70) baseDIN = 1.5;
-    else if (weightInKg < 80) baseDIN = 2.0;
-    else if (weightInKg < 90) baseDIN = 2.5;
-    else baseDIN = 3.0;
+    // Convertir edad a número (aproximado para el cálculo)
+    let ageValue;
+    if (age === '10-49') {
+        ageValue = 25; // Valor medio para rango 10-49
+    } else if (age === 'over50') {
+        ageValue = 50;
+    } else {
+        ageValue = 25; // Default
+    }
     
-    // Factor de nivel
-    const levelFactor = parseFloat(level);
-    baseDIN += (levelFactor - 1) * 0.5;
+    // Calcular filas y columnas
+    const rowH = calculateHeightRow(totalHeightInches);
+    const rowW = calculateWeightRow(weightInLbs);
     
-    // Factor de edad
-    if (age === 'under18') baseDIN -= 0.5;
-    else if (age === 'over50') baseDIN -= 0.5;
+    if (rowW === -1) {
+        return { error: 'Invalid weight (must be at least 22 lbs)' };
+    }
     
-    // Ajuste por altura
-    if (heightInCm > 180) baseDIN += 0.5;
-    else if (heightInCm < 160) baseDIN -= 0.5;
+    const agemod = calculateAgeModifier(ageValue);
+    const levmod = calculateLevelModifier(level, weightInLbs);
     
-    // Redondear a 0.5
-    const dinValue = Math.round(baseDIN * 2) / 2;
+    // Calcular fila final (usar la menor entre rowW y rowH)
+    let row;
+    if (rowW <= rowH) {
+        row = rowW + agemod + levmod;
+    } else {
+        row = rowH + agemod + levmod;
+    }
     
-    // Limitar entre 0.75 y 12
-    return Math.max(0.75, Math.min(12, dinValue));
+    const col = calculateSoleLengthColumn(soleLength);
+    
+    if (col === -1) {
+        return { error: 'Invalid sole length' };
+    }
+    
+    if (row < 1) {
+        return { error: 'Calculated row is too low, unable to determine skier code.' };
+    }
+    
+    // Calcular código de esquiador
+    const abc = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P'];
+    let skierCode = 'N/A';
+    if (row - 1 < abc.length) {
+        skierCode = abc[row - 1];
+    }
+    
+    // Obtener indicador de la matriz
+    const indMat = getIndicatorMatrix();
+    let indicator = 'N/A';
+    
+    if (skierCode !== 'N/A' && col !== -1) {
+        if (row - 1 < indMat.length && col - 1 < indMat[0].length) {
+            indicator = indMat[row - 1][col - 1];
+        }
+    }
+    
+    // Si el indicador es una cadena vacía o no válido, devolver error
+    if (indicator === '' || indicator === 'N/A') {
+        return { error: 'Unable to determine DIN setting from indicator matrix.' };
+    }
+    
+    return {
+        din: parseFloat(indicator),
+        skierCode: skierCode,
+        column: col,
+        row: row,
+        rowH: rowH,
+        rowW: rowW,
+        heightInInches: totalHeightInches,
+        weightInLbs: weightInLbs
+    };
 }
 
 // Mostrar resultados en el modal
 function showResults(data) {
     const resultsModal = document.getElementById('resultsModal');
     
-    // Actualizar valores en el modal
-    document.getElementById('resultHeight').textContent = `${data.height.toFixed(1)} cm`;
+    // Mostrar altura en ft e inch
+    if (data.heightFeet !== undefined && data.heightInches !== undefined) {
+        document.getElementById('resultHeight').textContent = `${data.heightFeet}'${data.heightInches}" (${data.height.toFixed(1)} cm)`;
+    } else {
+        document.getElementById('resultHeight').textContent = `${data.height.toFixed(1)} cm`;
+    }
+    
     document.getElementById('resultWeight').textContent = `${data.weight.toFixed(1)} kg`;
     document.getElementById('resultSoleLength').textContent = `${data.soleLength} mm`;
     
     // Traducir edad
     let ageText = '';
-    if (data.age === 'under18') ageText = '< 18';
-    else if (data.age === '18-50') ageText = '18 - 50';
-    else ageText = '50 +';
+    if (data.age === '10-49') ageText = '10 - 49';
+    else if (data.age === 'over50') ageText = '50 +';
+    else ageText = data.age;
     document.getElementById('resultAge').textContent = ageText;
     
     document.getElementById('resultLevel').textContent = `TYPE ${data.level}`;
-    document.getElementById('dinValue').textContent = data.din.toFixed(1);
+    
+    // Mostrar valor DIN y skier code si está disponible
+    if (data.skierCode) {
+        document.getElementById('dinValue').textContent = `${data.din.toFixed(1)} (${data.skierCode}${data.column})`;
+    } else {
+        document.getElementById('dinValue').textContent = data.din.toFixed(1);
+    }
     
     // Mostrar modal
     resultsModal.classList.add('show');
@@ -331,31 +511,135 @@ function showResults(data) {
     updateTranslations();
 }
 
-// Toggle de unidades de altura
+// Toggle de unidades de altura (ft/in <-> cm)
 function setupHeightToggle() {
-    const toggle = document.getElementById('heightToggle');
-    if (!toggle) return;
+    const toggleFtIn = document.getElementById('heightToggle');
+    const toggleCm = document.getElementById('heightToggleCm');
+    const heightInputGroupFtIn = document.getElementById('heightInputGroupFtIn');
+    const heightInputGroupCm = document.getElementById('heightInputGroupCm');
     
-    toggle.addEventListener('click', () => {
-        const heightInput = document.getElementById('height');
-        const heightUnitSpan = document.getElementById('heightUnit');
-        const inactiveSpan = toggle.querySelector('.inactive');
-        const currentValue = parseFloat(heightInput.value);
+    if (!toggleFtIn || !toggleCm) return;
+    
+    // Toggle desde ft/in a cm
+    toggleFtIn.addEventListener('click', () => {
+        const heightFeetInput = document.getElementById('heightFeet');
+        const heightInchesInput = document.getElementById('heightInches');
+        const heightCmInput = document.getElementById('heightCm');
         
-        if (appState.heightUnit === 'cm') {
-            appState.heightUnit = 'ft';
-            heightUnitSpan.textContent = 'FT';
-            inactiveSpan.textContent = 'CM';
-            if (!isNaN(currentValue) && currentValue > 0) {
-                heightInput.value = converters.cmToFt(currentValue);
-            }
-        } else {
-            appState.heightUnit = 'cm';
-            heightUnitSpan.textContent = 'CM';
-            inactiveSpan.textContent = 'FT';
-            if (!isNaN(currentValue) && currentValue > 0) {
-                heightInput.value = converters.ftToCm(currentValue);
-            }
+        // Convertir valor actual si existe
+        const feet = parseFloat(heightFeetInput.value) || 0;
+        const inches = parseFloat(heightInchesInput.value) || 0;
+        if (feet > 0 || inches > 0) {
+            const heightInCm = converters.ftInToCm(feet, inches);
+            heightCmInput.value = heightInCm.toFixed(1);
+        }
+        
+        // Cambiar estado
+        appState.heightUnit = 'cm';
+        heightInputGroupFtIn.style.display = 'none';
+        heightInputGroupCm.style.display = 'flex';
+        
+        // Limpiar inputs de ft/in
+        heightFeetInput.value = '';
+        heightInchesInput.value = '';
+        heightFeetInput.removeAttribute('required');
+        heightInchesInput.removeAttribute('required');
+        heightCmInput.setAttribute('required', 'required');
+    });
+    
+    // Toggle desde cm a ft/in
+    toggleCm.addEventListener('click', () => {
+        const heightFeetInput = document.getElementById('heightFeet');
+        const heightInchesInput = document.getElementById('heightInches');
+        const heightCmInput = document.getElementById('heightCm');
+        
+        // Convertir valor actual si existe
+        const cm = parseFloat(heightCmInput.value);
+        if (!isNaN(cm) && cm > 0) {
+            const { feet, inches } = converters.cmToFtIn(cm);
+            heightFeetInput.value = feet;
+            heightInchesInput.value = inches;
+        }
+        
+        // Cambiar estado
+        appState.heightUnit = 'ft';
+        heightInputGroupFtIn.style.display = 'flex';
+        heightInputGroupCm.style.display = 'none';
+        
+        // Limpiar input de cm
+        heightCmInput.value = '';
+        heightCmInput.removeAttribute('required');
+        heightFeetInput.setAttribute('required', 'required');
+        heightInchesInput.setAttribute('required', 'required');
+    });
+}
+
+// Configurar inputs de altura (ft e inch)
+function setupHeightInputs() {
+    const heightFeetInput = document.getElementById('heightFeet');
+    const heightInchesInput = document.getElementById('heightInches');
+    
+    if (!heightFeetInput || !heightInchesInput) return;
+    
+    // Auto-avanzar de ft a inch cuando se presiona Enter
+    heightFeetInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            heightInchesInput.focus();
+            return;
+        }
+    });
+    
+    // Auto-avanzar de ft a inch cuando se completa un valor válido
+    heightFeetInput.addEventListener('input', (e) => {
+        const value = e.target.value;
+        const numValue = parseInt(value);
+        // Si se ingresa un número válido (1-10), pasar automáticamente a inches
+        if (value.length > 0 && !isNaN(numValue) && numValue >= 1 && numValue <= 10) {
+            // Pequeño delay para permitir que el usuario termine de escribir
+            setTimeout(() => {
+                if (document.activeElement === heightFeetInput && heightFeetInput.value === value) {
+                    heightInchesInput.focus();
+                }
+            }, 100);
+        }
+    });
+    
+    // Auto-avanzar también con keyup cuando se suelta una tecla numérica
+    heightFeetInput.addEventListener('keyup', (e) => {
+        const value = e.target.value;
+        const numValue = parseInt(value);
+        // Si es un número válido y no es una tecla de navegación
+        if (!isNaN(numValue) && numValue >= 1 && numValue <= 10 && 
+            /^[0-9]$/.test(e.key) && document.activeElement === heightFeetInput) {
+            setTimeout(() => {
+                if (heightFeetInput.value === value) {
+                    heightInchesInput.focus();
+                }
+            }, 50);
+        }
+    });
+    
+    // Limitar ft a máximo 10
+    heightFeetInput.addEventListener('keyup', (e) => {
+        const value = parseFloat(e.target.value);
+        if (!isNaN(value) && value > 10) {
+            e.target.value = 10;
+        }
+    });
+    
+    // Limitar inches a máximo 11
+    heightInchesInput.addEventListener('keyup', (e) => {
+        const value = parseFloat(e.target.value);
+        if (!isNaN(value) && value > 11) {
+            e.target.value = 11;
+        }
+    });
+    
+    // Si se borra inches y está vacío, volver al input de ft
+    heightInchesInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && e.target.value === '' && e.target.selectionStart === 0) {
+            heightFeetInput.focus();
         }
     });
 }
@@ -436,37 +720,80 @@ function setupFormSubmit() {
     form.addEventListener('submit', (e) => {
         e.preventDefault();
         
-        const height = parseFloat(document.getElementById('height').value);
+        let heightInCm = 0;
+        let heightFeet = 0;
+        let heightInches = 0;
         const weight = parseFloat(document.getElementById('weight').value);
         const soleLength = parseFloat(document.getElementById('soleLength').value);
         
-        // Validación
-        if (!height || !weight || !soleLength) {
+        // Obtener altura según el sistema actual
+        if (appState.heightUnit === 'ft') {
+            heightFeet = parseFloat(document.getElementById('heightFeet').value) || 0;
+            heightInches = parseFloat(document.getElementById('heightInches').value) || 0;
+            
+            // Validación para ft/in
+            if (!heightFeet && !heightInches) {
+                alert(translate('validationError'));
+                return;
+            }
+            
+            // Convertir altura ft+inch a cm
+            heightInCm = converters.ftInToCm(heightFeet, heightInches);
+        } else {
+            // Sistema métrico (cm)
+            const heightCm = parseFloat(document.getElementById('heightCm').value);
+            
+            // Validación para cm
+            if (!heightCm || heightCm <= 0) {
+                alert(translate('validationError'));
+                return;
+            }
+            
+            heightInCm = heightCm;
+        }
+        
+        // Validación de peso y sole length
+        if (!weight || !soleLength) {
             alert(translate('validationError'));
             return;
         }
         
-        // Convertir a unidades estándar
-        const heightInCm = appState.heightUnit === 'ft' 
-            ? converters.ftToCm(height) 
-            : height;
-        
+        // Convertir peso a kg
         const weightInKg = appState.weightUnit === 'lbs' 
             ? converters.lbsToKg(weight) 
             : weight;
         
         // Calcular DIN
-        const dinValue = calculateDIN(heightInCm, weightInKg, soleLength, appState.selectedAge, appState.selectedLevel);
+        const dinResult = calculateDIN(heightInCm, weightInKg, soleLength, appState.selectedAge, appState.selectedLevel);
+        
+        // Verificar si hay error
+        if (dinResult.error) {
+            alert(dinResult.error);
+            return;
+        }
         
         // Mostrar resultados en el modal
-        showResults({
+        const resultsData = {
             height: heightInCm,
             weight: weightInKg,
             soleLength: soleLength,
             age: appState.selectedAge,
             level: appState.selectedLevel,
-            din: dinValue
-        });
+            din: dinResult.din,
+            skierCode: dinResult.skierCode,
+            column: dinResult.column,
+            row: dinResult.row
+        };
+        
+        // Agregar datos de altura según el sistema usado
+        if (appState.heightUnit === 'ft') {
+            resultsData.heightFeet = heightFeet;
+            resultsData.heightInches = heightInches;
+        } else {
+            resultsData.heightCm = heightInCm;
+        }
+        
+        showResults(resultsData);
     });
 }
 
