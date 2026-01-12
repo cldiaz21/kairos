@@ -642,6 +642,80 @@ function showResults(data) {
     updateTranslations();
 }
 
+// Formatear altura imperial (ft'in")
+function formatHeightFtIn(value) {
+    // Remover todos los caracteres no numéricos excepto el apóstrofe y comillas
+    let cleaned = value.replace(/[^\d'"]/g, '');
+    
+    // Si tiene apóstrofe, separar pies y pulgadas
+    if (cleaned.includes("'")) {
+        const parts = cleaned.split("'");
+        const feet = parts[0] || '';
+        let inches = (parts[1] || '').replace(/"/g, '');
+        
+        // Limitar pies a 1-2 dígitos y pulgadas a 2 dígitos
+        const feetLimited = feet.slice(0, 2);
+        const inchesLimited = inches.slice(0, 2);
+        
+        if (feetLimited && inchesLimited) {
+            return `${feetLimited}'${inchesLimited}"`;
+        } else if (feetLimited) {
+            return `${feetLimited}'`;
+        }
+        return cleaned;
+    }
+    
+    // Si no tiene apóstrofe, formatear según la longitud
+    if (cleaned.length === 0) return '';
+    if (cleaned.length === 1) return cleaned; // Solo un dígito (pies)
+    if (cleaned.length === 2) {
+        // 2 dígitos: pies y primer dígito de pulgadas (ej: "51" = 5'1)
+        return `${cleaned[0]}'${cleaned[1]}`;
+    }
+    if (cleaned.length >= 3) {
+        // 3+ dígitos: últimos dos son pulgadas (ej: "510" = 5'10")
+        const feet = cleaned.slice(0, -2);
+        const inches = cleaned.slice(-2);
+        return `${feet}'${inches}"`;
+    }
+    
+    return cleaned;
+}
+
+// Parsear altura imperial (ft'in") a pies y pulgadas
+function parseHeightFtIn(value) {
+    if (!value) return { feet: 0, inches: 0 };
+    
+    const cleaned = value.replace(/[^\d'"]/g, '');
+    
+    if (cleaned.includes("'")) {
+        const parts = cleaned.split("'");
+        const feet = parseInt(parts[0]) || 0;
+        const inchesStr = (parts[1] || '').replace(/"/g, '');
+        const inches = parseInt(inchesStr) || 0;
+        return { feet, inches };
+    }
+    
+    // Si no tiene apóstrofe, intentar interpretar como número
+    const num = parseInt(cleaned);
+    if (!isNaN(num)) {
+        if (num < 10) {
+            // Un solo dígito: pies
+            return { feet: num, inches: 0 };
+        } else if (num < 100) {
+            // Dos dígitos: pies y pulgadas (ej: 510 = 5'10")
+            return { feet: Math.floor(num / 10), inches: num % 10 };
+        } else {
+            // Tres o más dígitos: últimos dos son pulgadas (ej: 510 = 5'10")
+            const feet = Math.floor(num / 100);
+            const inches = num % 100;
+            return { feet, inches };
+        }
+    }
+    
+    return { feet: 0, inches: 0 };
+}
+
 // Toggle de unidades de altura (ft/in <-> cm)
 function setupHeightToggle() {
     const toggleFtIn = document.getElementById('heightToggle');
@@ -653,146 +727,105 @@ function setupHeightToggle() {
     
     // Toggle desde ft/in a cm
     toggleFtIn.addEventListener('click', () => {
-        const heightFeetInput = document.getElementById('heightFeet');
-        const heightInchesInput = document.getElementById('heightInches');
+        const heightFtInInput = document.getElementById('heightFtIn');
         const heightCmInput = document.getElementById('heightCm');
         
         // Convertir valor actual si existe
-        const feet = parseFloat(heightFeetInput.value) || 0;
-        const inches = parseFloat(heightInchesInput.value) || 0;
-        if (feet > 0 || inches > 0) {
-            const heightInCm = converters.ftInToCm(feet, inches);
-            heightCmInput.value = heightInCm.toFixed(1);
+        if (heightFtInInput && heightFtInInput.value) {
+            const { feet, inches } = parseHeightFtIn(heightFtInInput.value);
+            if (feet > 0 || inches > 0) {
+                const heightInCm = converters.ftInToCm(feet, inches);
+                if (heightCmInput) {
+                    heightCmInput.value = heightInCm.toFixed(1);
+                }
+            }
         }
         
         // Cambiar estado
         appState.heightUnit = 'cm';
-        heightInputGroupFtIn.style.display = 'none';
-        heightInputGroupCm.style.display = 'flex';
+        if (heightInputGroupFtIn) heightInputGroupFtIn.style.display = 'none';
+        if (heightInputGroupCm) heightInputGroupCm.style.display = 'flex';
         
-        // Limpiar inputs de ft/in
-        heightFeetInput.value = '';
-        heightInchesInput.value = '';
-        heightFeetInput.removeAttribute('required');
-        heightInchesInput.removeAttribute('required');
-        heightCmInput.setAttribute('required', 'required');
+        // Limpiar input de ft/in
+        if (heightFtInInput) {
+            heightFtInInput.value = '';
+            heightFtInInput.removeAttribute('required');
+        }
+        if (heightCmInput) heightCmInput.setAttribute('required', 'required');
     });
     
     // Toggle desde cm a ft/in
     toggleCm.addEventListener('click', () => {
-        const heightFeetInput = document.getElementById('heightFeet');
-        const heightInchesInput = document.getElementById('heightInches');
+        const heightFtInInput = document.getElementById('heightFtIn');
         const heightCmInput = document.getElementById('heightCm');
         
         // Convertir valor actual si existe
-        const cm = parseFloat(heightCmInput.value);
-        if (!isNaN(cm) && cm > 0) {
-            const { feet, inches } = converters.cmToFtIn(cm);
-            heightFeetInput.value = feet;
-            heightInchesInput.value = inches;
+        if (heightCmInput && heightCmInput.value) {
+            const cm = parseFloat(heightCmInput.value);
+            if (!isNaN(cm) && cm > 0) {
+                const { feet, inches } = converters.cmToFtIn(cm);
+                if (heightFtInInput) {
+                    heightFtInInput.value = `${feet}'${inches}"`;
+                }
+            }
         }
         
         // Cambiar estado
         appState.heightUnit = 'ft';
-        heightInputGroupFtIn.style.display = 'flex';
-        heightInputGroupCm.style.display = 'none';
+        if (heightInputGroupFtIn) heightInputGroupFtIn.style.display = 'flex';
+        if (heightInputGroupCm) heightInputGroupCm.style.display = 'none';
         
         // Limpiar input de cm
-        heightCmInput.value = '';
-        heightCmInput.removeAttribute('required');
-        heightFeetInput.setAttribute('required', 'required');
-        heightInchesInput.setAttribute('required', 'required');
+        if (heightCmInput) {
+            heightCmInput.value = '';
+            heightCmInput.removeAttribute('required');
+        }
+        if (heightFtInInput) heightFtInInput.setAttribute('required', 'required');
     });
 }
 
-// Configurar inputs de altura (ft e inch)
+// Configurar input de altura unificado (ft/in)
 function setupHeightInputs() {
-    const heightFeetInput = document.getElementById('heightFeet');
-    const heightInchesInput = document.getElementById('heightInches');
-    const heightInputGroup = document.getElementById('heightInputGroupFtIn');
+    const heightFtInInput = document.getElementById('heightFtIn');
     
-    if (!heightFeetInput || !heightInchesInput || !heightInputGroup) return;
+    if (!heightFtInInput) return;
     
-    // Agregar/quitar clase focused cuando se hace focus/blur
-    heightFeetInput.addEventListener('focus', () => {
-        heightInputGroup.classList.add('focused');
-    });
-    
-    heightFeetInput.addEventListener('blur', () => {
-        if (document.activeElement !== heightInchesInput) {
-            heightInputGroup.classList.remove('focused');
+    // Formatear mientras el usuario escribe
+    heightFtInInput.addEventListener('input', (e) => {
+        const value = e.target.value;
+        const cursorPos = e.target.selectionStart;
+        const formatted = formatHeightFtIn(value);
+        
+        // Actualizar el valor
+        e.target.value = formatted;
+        
+        // Ajustar posición del cursor de manera inteligente
+        let newCursorPos = cursorPos;
+        const lengthDiff = formatted.length - value.length;
+        
+        if (lengthDiff > 0) {
+            // Se agregaron caracteres (apóstrofe o comillas)
+            newCursorPos = cursorPos + lengthDiff;
+        } else if (lengthDiff < 0) {
+            // Se eliminaron caracteres
+            newCursorPos = Math.max(0, cursorPos + lengthDiff);
         }
+        
+        // Asegurar que el cursor no esté en una posición inválida
+        newCursorPos = Math.min(newCursorPos, formatted.length);
+        
+        // Usar setTimeout para asegurar que el DOM se actualice
+        setTimeout(() => {
+            e.target.setSelectionRange(newCursorPos, newCursorPos);
+        }, 0);
     });
     
-    heightInchesInput.addEventListener('focus', () => {
-        heightInputGroup.classList.add('focused');
-    });
-    
-    heightInchesInput.addEventListener('blur', () => {
-        if (document.activeElement !== heightFeetInput) {
-            heightInputGroup.classList.remove('focused');
-        }
-    });
-    
-    // Auto-avanzar de ft a inch cuando se presiona Enter
-    heightFeetInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
+    // Permitir solo números y apóstrofe en el teclado
+    heightFtInInput.addEventListener('keypress', (e) => {
+        const char = String.fromCharCode(e.which || e.keyCode);
+        // Permitir números, apóstrofe (') y comillas (")
+        if (!/[0-9'"]/.test(char) && !e.ctrlKey && !e.metaKey) {
             e.preventDefault();
-            heightInchesInput.focus();
-            return;
-        }
-    });
-    
-    // Auto-avanzar de ft a inch cuando se completa un valor válido
-    heightFeetInput.addEventListener('input', (e) => {
-        const value = e.target.value;
-        const numValue = parseInt(value);
-        // Si se ingresa un número válido (1-10), pasar automáticamente a inches
-        if (value.length > 0 && !isNaN(numValue) && numValue >= 1 && numValue <= 10) {
-            // Pequeño delay para permitir que el usuario termine de escribir
-            setTimeout(() => {
-                if (document.activeElement === heightFeetInput && heightFeetInput.value === value) {
-                    heightInchesInput.focus();
-                }
-            }, 100);
-        }
-    });
-    
-    // Auto-avanzar también con keyup cuando se suelta una tecla numérica
-    heightFeetInput.addEventListener('keyup', (e) => {
-        const value = e.target.value;
-        const numValue = parseInt(value);
-        // Si es un número válido y no es una tecla de navegación
-        if (!isNaN(numValue) && numValue >= 1 && numValue <= 10 && 
-            /^[0-9]$/.test(e.key) && document.activeElement === heightFeetInput) {
-            setTimeout(() => {
-                if (heightFeetInput.value === value) {
-                    heightInchesInput.focus();
-                }
-            }, 50);
-        }
-    });
-    
-    // Limitar ft a máximo 10
-    heightFeetInput.addEventListener('keyup', (e) => {
-        const value = parseFloat(e.target.value);
-        if (!isNaN(value) && value > 10) {
-            e.target.value = 10;
-        }
-    });
-    
-    // Limitar inches a máximo 11
-    heightInchesInput.addEventListener('keyup', (e) => {
-        const value = parseFloat(e.target.value);
-        if (!isNaN(value) && value > 11) {
-            e.target.value = 11;
-        }
-    });
-    
-    // Si se borra inches y está vacío, volver al input de ft
-    heightInchesInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Backspace' && e.target.value === '' && e.target.selectionStart === 0) {
-            heightFeetInput.focus();
         }
     });
 }
@@ -881,8 +914,11 @@ function setupFormSubmit() {
         
         // Obtener altura según el sistema actual
         if (appState.heightUnit === 'ft') {
-            heightFeet = parseFloat(document.getElementById('heightFeet').value) || 0;
-            heightInches = parseFloat(document.getElementById('heightInches').value) || 0;
+            const heightFtInInput = document.getElementById('heightFtIn');
+            const ftInValue = heightFtInInput ? heightFtInInput.value : '';
+            const parsed = parseHeightFtIn(ftInValue);
+            heightFeet = parsed.feet;
+            heightInches = parsed.inches;
             
             // Validación para ft/in
             if (!heightFeet && !heightInches) {

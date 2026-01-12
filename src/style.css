@@ -130,64 +130,9 @@ body {
     position: relative;
 }
 
-/* Height Input Group (ft e inch) */
-.height-input-group {
+/* Height Input Group (ft/in unificado) */
+.height-input-group-ftin {
     display: flex;
-    align-items: center;
-    background: var(--input-bg);
-    border-radius: 12px 0 12px 0;
-    padding: 0;
-    backdrop-filter: blur(10px);
-    border: none;
-    overflow: hidden;
-    transition: all 0.3s ease;
-}
-
-.height-input-group.focused {
-    background: rgba(51, 65, 85, 0.7);
-    box-shadow: 0 0 15px var(--glow-cyan);
-}
-
-.height-feet-input,
-.height-inches-input {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 0 12px;
-    height: 48px;
-    background: transparent;
-}
-
-.height-feet-input {
-    border-right: 1px solid rgba(255, 255, 255, 0.15);
-}
-
-.height-feet-input .form-control-custom,
-.height-inches-input .form-control-custom {
-    flex: 1;
-    text-align: center;
-    background: transparent;
-    border: none;
-    border-radius: 0;
-    padding: 0;
-    box-shadow: none;
-    height: 100%;
-}
-
-.height-feet-input .form-control-custom:focus,
-.height-inches-input .form-control-custom:focus {
-    background: transparent;
-    box-shadow: none;
-    outline: none;
-    border: none;
-}
-
-.height-unit-label {
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-    font-weight: 600;
-    min-width: 30px;
 }
 
 .height-input-group-cm {
@@ -805,10 +750,10 @@ body {
 }
 
 .measures-image {
-    max-width: 100%;
+    max-width: 80%;
     height: auto;
-    border-radius: 12px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    border: none;
 }
 
 .modal-body {
