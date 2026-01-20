@@ -1,5 +1,7 @@
 // Importar estilos (Vite maneja esto automáticamente)
 import './style.css';
+// Importar Tesseract.js para OCR
+import { createWorker } from 'tesseract.js';
 
 // Verificar que todo se cargue correctamente
 console.log('KAIROS: Módulos cargados correctamente');
@@ -47,17 +49,34 @@ const translations = {
         calculateAnother: 'Calcular otro DIN',
         viewMeasures: 'Ver Medidas',
         measuresTitle: 'Tabla de Medidas de Longitud de Suela',
+        errorHeightInvalid: 'Error en ALTURA: Por favor ingresa una altura válida mayor a 0 cm.',
+        errorWeightInvalid: 'Error en PESO: Por favor ingresa un peso válido mayor a 0 kg.',
+        errorSoleLengthInvalid: 'Error en LONGITUD DE SUELA: Por favor ingresa una longitud de suela válida mayor a 0 mm.',
+        errorWeightTooLow: 'Error en PESO: El peso ingresado ({kg} kg / {lbs} lbs) es demasiado bajo. El peso mínimo requerido es de 22 lbs (aproximadamente 10 kg). Por favor verifica el campo de PESO.',
+        errorHeightTooLow: 'Error en ALTURA: La altura ingresada ({heightCm} cm / {heightIn} in) es demasiado baja. La altura mínima requerida es de aproximadamente 59 pulgadas (150 cm). Por favor verifica el campo de ALTURA.',
+        errorSoleLengthTooLow: 'Error en LONGITUD DE SUELA: La longitud de suela ingresada ({soleLength} mm) es demasiado baja. La longitud mínima requerida es de 231 mm. Por favor verifica el campo de LONGITUD DE SUELA.',
+        errorMetricsCombination: 'Error en la combinación de métricas: La combinación de altura ({height} cm), peso ({weight} kg) y edad no permite calcular un código de esquiador válido. Por favor verifica los campos de ALTURA, PESO y EDAD.',
+        errorRowOutOfBounds: 'Error en el cálculo: El código de esquiador calculado (fila {row}) está fuera del rango válido. Esto puede deberse a una combinación extrema de ALTURA, PESO, EDAD o NIVEL. Por favor verifica todos los campos.',
+        errorSoleLengthOutOfRange: 'Error en LONGITUD DE SUELA: La longitud de suela ingresada ({soleLength} mm) está fuera del rango válido. Por favor verifica el campo de LONGITUD DE SUELA. El rango válido es entre 231 mm y 350+ mm.',
+        errorMatrixIndex: 'Error interno en el cálculo: Índice de matriz fuera de rango. Por favor verifica los campos de ALTURA, PESO, LONGITUD DE SUELA, EDAD y NIVEL.',
+        errorNoDINValue: 'No se puede determinar el valor DIN: La combinación de métricas ingresadas no tiene un valor DIN válido en la tabla de referencia. Código de Esquiador: {skierCode}. Columna de Longitud de Suela: {col}. Por favor verifica {problemField}.',
+        errorInvalidDINValue: 'Error en el cálculo del DIN: El valor obtenido de la tabla no es válido. Por favor verifica los campos de ALTURA, PESO, LONGITUD DE SUELA, EDAD y NIVEL.',
         equipmentRecommendations: 'Recomendaciones de Equipo',
         poleLength: 'Largo de Bastones:',
         skiLength: 'Largo de Ski:',
         importantNotices: 'Avisos Importantes',
         measureWithCamera: 'Medir con Cámara',
         cameraModalTitle: 'Medir con Cámara',
-        cameraInstructions: 'Coloca un objeto de referencia (como una tarjeta de crédito) junto a la suela de la bota y captura una foto.',
-        cameraHowTo: '📸 Cómo medir:',
-        cameraStep1: '1. Coloca una tarjeta de crédito (85.6mm de ancho) o regla junto a la suela de la bota',
-        cameraStep2: '2. Posiciona la cámara directamente arriba',
+        cameraInstructions: 'Captura una foto de un documento que contenga información de la persona (edad, peso, altura, largo de bota, tipo/nivel). El sistema intentará reconocer los datos automáticamente.',
+        cameraHowTo: '📸 Cómo capturar:',
+        cameraStep1: '1. Posiciona el documento con información personal (edad, peso, altura, largo de bota, TYPE I/II/III) claramente visible',
+        cameraStep2: '2. Asegúrate de tener buena iluminación y enfoque',
         cameraStep3: '3. Toca para capturar y analizar',
+        ocrProcessing: 'Procesando imagen...',
+        ocrRecognizing: 'Reconociendo texto...',
+        ocrNoDataFound: 'No se pudieron reconocer los datos. Por favor ingrésalos manualmente.',
+        ocrDataFound: 'Datos reconocidos:',
+        enterManually: 'Ingresar Manualmente',
         startCamera: 'Iniciar Cámara',
         capturePhoto: 'Capturar',
         stopCamera: 'Detener',
@@ -108,17 +127,35 @@ const translations = {
         calculateAnother: 'Calculate Another DIN',
         viewMeasures: 'View Measures',
         measuresTitle: 'Boot Sole Length Measures',
+        errorHeightInvalid: 'Error in HEIGHT: Please enter a valid height greater than 0 cm.',
+        errorWeightInvalid: 'Error in WEIGHT: Please enter a valid weight greater than 0 kg.',
+        errorSoleLengthInvalid: 'Error in BOOT SOLE LENGTH: Please enter a valid sole length greater than 0 mm.',
+        errorWeightTooLow: 'Error in WEIGHT: The entered weight ({kg} kg / {lbs} lbs) is too low. The minimum required weight is 22 lbs (approximately 10 kg). Please verify the WEIGHT field.',
+        errorHeightTooLow: 'Error in HEIGHT: The entered height ({heightCm} cm / {heightIn} in) is too low. The minimum required height is approximately 59 inches (150 cm). Please verify the HEIGHT field.',
+        errorSoleLengthTooLow: 'Error in BOOT SOLE LENGTH: The entered sole length ({soleLength} mm) is too low. The minimum required length is 231 mm. Please verify the BOOT SOLE LENGTH field.',
+        errorMetricsCombination: 'Error in metrics combination: The combination of height ({height} cm), weight ({weight} kg) and age does not allow calculating a valid skier code. Please verify the HEIGHT, WEIGHT and AGE fields.',
+        errorRowOutOfBounds: 'Calculation error: The calculated skier code (row {row}) is out of valid range. This may be due to an extreme combination of HEIGHT, WEIGHT, AGE or LEVEL. Please verify all fields.',
+        errorSoleLengthOutOfRange: 'Error in BOOT SOLE LENGTH: The entered sole length ({soleLength} mm) is out of valid range. Please verify the BOOT SOLE LENGTH field. The valid range is between 231 mm and 350+ mm.',
+        errorMatrixIndex: 'Internal calculation error: Matrix index out of range. Please verify the HEIGHT, WEIGHT, BOOT SOLE LENGTH, AGE and LEVEL fields.',
+        errorNoDINValue: 'Cannot determine DIN value: The entered metrics combination does not have a valid DIN value in the reference table. Skier Code: {skierCode}. Sole Length Column: {col}. Please verify {problemField}.',
+        errorInvalidDINValue: 'Error in DIN calculation: The value obtained from the table is not valid. Please verify the HEIGHT, WEIGHT, BOOT SOLE LENGTH, AGE and LEVEL fields.',
         equipmentRecommendations: 'Equipment Recommendations',
         poleLength: 'Pole Length:',
         skiLength: 'Ski Length:',
         importantNotices: 'Important Notices',
         measureWithCamera: 'Measure with Camera',
         cameraModalTitle: 'Measure with Camera',
-        cameraInstructions: 'Place a reference object (like a credit card) next to the boot sole and capture a photo.',
-        cameraHowTo: '📸 How to measure:',
-        cameraStep1: '1. Place a credit card (85.6mm wide) or ruler next to the boot sole',
-        cameraStep2: '2. Position the camera directly above',
+        cameraInstructions: 'Capture a photo of a document containing person information (age, weight, height, boot sole length, type/level). The system will try to recognize the data automatically.',
+        cameraHowTo: '📸 How to capture:',
+        cameraStep1: '1. Position the document with personal information (age, weight, height, boot sole length, TYPE I/II/III) clearly visible',
+        cameraStep2: '2. Ensure good lighting and focus',
         cameraStep3: '3. Tap to capture and analyze',
+        ocrProcessing: 'Processing image...',
+        ocrRecognizing: 'Recognizing text...',
+        ocrNoDataFound: 'Could not recognize the data. Please enter them manually.',
+        ocrDataFound: 'Recognized data:',
+        enterManually: 'Enter Manually',
+        useRecognizedData: 'Use Recognized Data',
         startCamera: 'Start Camera',
         capturePhoto: 'Capture',
         stopCamera: 'Stop',
@@ -169,17 +206,35 @@ const translations = {
         calculateAnother: 'Calcular outro DIN',
         viewMeasures: 'Ver Medidas',
         measuresTitle: 'Tabela de Medidas de Comprimento da Sola',
+        errorHeightInvalid: 'Erro em ALTURA: Por favor digite uma altura válida maior que 0 cm.',
+        errorWeightInvalid: 'Erro em PESO: Por favor digite um peso válido maior que 0 kg.',
+        errorSoleLengthInvalid: 'Erro em COMPRIMENTO DA SOLA: Por favor digite um comprimento de sola válido maior que 0 mm.',
+        errorWeightTooLow: 'Erro em PESO: O peso inserido ({kg} kg / {lbs} lbs) é muito baixo. O peso mínimo necessário é de 22 lbs (aproximadamente 10 kg). Por favor verifique o campo de PESO.',
+        errorHeightTooLow: 'Erro em ALTURA: A altura inserida ({heightCm} cm / {heightIn} in) é muito baixa. A altura mínima necessária é de aproximadamente 59 polegadas (150 cm). Por favor verifique o campo de ALTURA.',
+        errorSoleLengthTooLow: 'Erro em COMPRIMENTO DA SOLA: O comprimento de sola inserido ({soleLength} mm) é muito baixo. O comprimento mínimo necessário é de 231 mm. Por favor verifique o campo de COMPRIMENTO DA SOLA.',
+        errorMetricsCombination: 'Erro na combinação de métricas: A combinação de altura ({height} cm), peso ({weight} kg) e idade não permite calcular um código de esquiador válido. Por favor verifique os campos de ALTURA, PESO e IDADE.',
+        errorRowOutOfBounds: 'Erro no cálculo: O código de esquiador calculado (linha {row}) está fora do intervalo válido. Isso pode ser devido a uma combinação extrema de ALTURA, PESO, IDADE ou NÍVEL. Por favor verifique todos os campos.',
+        errorSoleLengthOutOfRange: 'Erro em COMPRIMENTO DA SOLA: O comprimento de sola inserido ({soleLength} mm) está fora do intervalo válido. Por favor verifique o campo de COMPRIMENTO DA SOLA. O intervalo válido é entre 231 mm e 350+ mm.',
+        errorMatrixIndex: 'Erro interno no cálculo: Índice da matriz fora do intervalo. Por favor verifique os campos de ALTURA, PESO, COMPRIMENTO DA SOLA, IDADE e NÍVEL.',
+        errorNoDINValue: 'Não é possível determinar o valor DIN: A combinação de métricas inseridas não tem um valor DIN válido na tabela de referência. Código de Esquiador: {skierCode}. Coluna de Comprimento da Sola: {col}. Por favor verifique {problemField}.',
+        errorInvalidDINValue: 'Erro no cálculo do DIN: O valor obtido da tabela não é válido. Por favor verifique os campos de ALTURA, PESO, COMPRIMENTO DA SOLA, IDADE e NÍVEL.',
         equipmentRecommendations: 'Recomendações de Equipamento',
         poleLength: 'Comprimento de Bastões:',
         skiLength: 'Comprimento de Esqui:',
         importantNotices: 'Avisos Importantes',
         measureWithCamera: 'Medir com Câmera',
         cameraModalTitle: 'Medir com Câmera',
-        cameraInstructions: 'Coloque um objeto de referência (como um cartão de crédito) ao lado da sola da bota e capture uma foto.',
-        cameraHowTo: '📸 Como medir:',
-        cameraStep1: '1. Coloque um cartão de crédito (85.6mm de largura) ou régua ao lado da sola da bota',
-        cameraStep2: '2. Posicione a câmera diretamente acima',
+        cameraInstructions: 'Capture uma foto de um documento contendo informações da pessoa (idade, peso, altura, comprimento da bota, tipo/nível). O sistema tentará reconhecer os dados automaticamente.',
+        cameraHowTo: '📸 Como capturar:',
+        cameraStep1: '1. Posicione o documento com informações pessoais (idade, peso, altura, comprimento da bota, TYPE I/II/III) claramente visíveis',
+        cameraStep2: '2. Certifique-se de ter boa iluminação e foco',
         cameraStep3: '3. Toque para capturar e analisar',
+        ocrProcessing: 'Processando imagem...',
+        ocrRecognizing: 'Reconhecendo texto...',
+        ocrNoDataFound: 'Não foi possível reconhecer os dados. Por favor, insira-os manualmente.',
+        ocrDataFound: 'Dados reconhecidos:',
+        enterManually: 'Inserir Manualmente',
+        useRecognizedData: 'Usar Dados Reconhecidos',
         startCamera: 'Iniciar Câmera',
         capturePhoto: 'Capturar',
         stopCamera: 'Parar',
@@ -234,6 +289,11 @@ function updateTranslations() {
     document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
         const key = el.getAttribute('data-i18n-placeholder');
         el.placeholder = translate(key);
+    });
+    
+    document.querySelectorAll('[data-i18n-title]').forEach(el => {
+        const key = el.getAttribute('data-i18n-title');
+        el.title = translate(key);
     });
 }
 
@@ -630,15 +690,15 @@ function calculateEquipmentRecommendations(heightInCm, age) {
 function calculateDIN(heightInCm, weightInKg, soleLength, age, level) {
     // Validaciones iniciales
     if (!heightInCm || heightInCm <= 0) {
-        return { error: '❌ Error en ALTURA: Por favor ingresa una altura válida mayor a 0 cm.' };
+        return { error: '❌ ' + translate('errorHeightInvalid') };
     }
     
     if (!weightInKg || weightInKg <= 0) {
-        return { error: '❌ Error en PESO: Por favor ingresa un peso válido mayor a 0 kg.' };
+        return { error: '❌ ' + translate('errorWeightInvalid') };
     }
     
     if (!soleLength || soleLength <= 0) {
-        return { error: '❌ Error en LONGITUD DE SUELA: Por favor ingresa una longitud de suela válida mayor a 0 mm.' };
+        return { error: '❌ ' + translate('errorSoleLengthInvalid') };
     }
     
     // Convertir altura a pulgadas totales
@@ -653,7 +713,7 @@ function calculateDIN(heightInCm, weightInKg, soleLength, age, level) {
     // Validar peso mínimo
     if (weightInLbs < 22) {
         return { 
-            error: `❌ Error en PESO: El peso ingresado (${weightInKg.toFixed(1)} kg / ${weightInLbs.toFixed(1)} lbs) es demasiado bajo. El peso mínimo requerido es de 22 lbs (aproximadamente 10 kg). Por favor verifica el campo de PESO.` 
+            error: '❌ ' + translate('errorWeightTooLow').replace('{kg}', weightInKg.toFixed(1)).replace('{lbs}', weightInLbs.toFixed(1))
         };
     }
     
@@ -679,7 +739,7 @@ function calculateDIN(heightInCm, weightInKg, soleLength, age, level) {
     // Validar altura (debe estar en rango válido)
     if (totalHeightInches < 59) {
         return { 
-            error: `❌ Error en ALTURA: La altura ingresada (${heightInCm.toFixed(1)} cm / ${totalHeightInches.toFixed(0)} in) es demasiado baja. La altura mínima requerida es de aproximadamente 59 pulgadas (150 cm). Por favor verifica el campo de ALTURA.` 
+            error: '❌ ' + translate('errorHeightTooLow').replace('{heightCm}', heightInCm.toFixed(1)).replace('{heightIn}', totalHeightInches.toFixed(0))
         };
     }
     
@@ -699,13 +759,13 @@ function calculateDIN(heightInCm, weightInKg, soleLength, age, level) {
     // Validar longitud de suela
     if (soleLength < 231) {
         return { 
-            error: `❌ Error en LONGITUD DE SUELA: La longitud de suela ingresada (${soleLength} mm) es demasiado baja. La longitud mínima requerida es de 231 mm. Por favor verifica el campo de LONGITUD DE SUELA (Boot Sole Length).` 
+            error: '❌ ' + translate('errorSoleLengthTooLow').replace('{soleLength}', soleLength)
         };
     }
     
     if (row < 1) {
         return { 
-            error: `❌ Error en la combinación de métricas: La combinación de altura (${heightInCm.toFixed(1)} cm), peso (${weightInKg.toFixed(1)} kg) y edad no permite calcular un código de esquiador válido. Por favor verifica los campos de ALTURA, PESO y EDAD.` 
+            error: '❌ ' + translate('errorMetricsCombination').replace('{height}', heightInCm.toFixed(1)).replace('{weight}', weightInKg.toFixed(1))
         };
     }
     
@@ -723,13 +783,13 @@ function calculateDIN(heightInCm, weightInKg, soleLength, age, level) {
     // Validar que row y col estén dentro de los límites válidos
     if (row < 1 || row > 16) {
         return { 
-            error: `❌ Error en el cálculo: El código de esquiador calculado (fila ${row}) está fuera del rango válido. Esto puede deberse a una combinación extrema de ALTURA, PESO, EDAD o NIVEL. Por favor verifica todos los campos.` 
+            error: '❌ ' + translate('errorRowOutOfBounds').replace('{row}', row)
         };
     }
     
     if (col < 1 || col > 8) {
         return { 
-            error: `❌ Error en LONGITUD DE SUELA: La longitud de suela ingresada (${soleLength} mm) está fuera del rango válido. Por favor verifica el campo de LONGITUD DE SUELA (Boot Sole Length). El rango válido es entre 231 mm y 350+ mm.` 
+            error: '❌ ' + translate('errorSoleLengthOutOfRange').replace('{soleLength}', soleLength)
         };
     }
     
@@ -741,7 +801,7 @@ function calculateDIN(heightInCm, weightInKg, soleLength, age, level) {
             indicator = indMat[rowIndex][colIndex];
         } else {
             return { 
-                error: `❌ Error interno en el cálculo: Índice de matriz fuera de rango. Por favor verifica los campos de ALTURA, PESO, LONGITUD DE SUELA, EDAD y NIVEL.` 
+                error: '❌ ' + translate('errorMatrixIndex')
             };
         }
     }
@@ -770,18 +830,33 @@ function calculateDIN(heightInCm, weightInKg, soleLength, age, level) {
         // Determinar qué campo puede estar causando el problema
         let problemField = '';
         if (rowH > 13 || rowW > 13) {
-            problemField = 'ALTURA o PESO';
+            if (appState.currentLang === 'es') {
+                problemField = 'ALTURA o PESO';
+            } else if (appState.currentLang === 'pt') {
+                problemField = 'ALTURA ou PESO';
+            } else {
+                problemField = 'HEIGHT or WEIGHT';
+            }
         } else if (col > 8) {
-            problemField = 'LONGITUD DE SUELA';
+            if (appState.currentLang === 'es') {
+                problemField = 'LONGITUD DE SUELA';
+            } else if (appState.currentLang === 'pt') {
+                problemField = 'COMPRIMENTO DA SOLA';
+            } else {
+                problemField = 'BOOT SOLE LENGTH';
+            }
         } else {
-            problemField = 'la combinación de ALTURA, PESO y LONGITUD DE SUELA';
+            if (appState.currentLang === 'es') {
+                problemField = 'la combinación de ALTURA, PESO y LONGITUD DE SUELA';
+            } else if (appState.currentLang === 'pt') {
+                problemField = 'a combinação de ALTURA, PESO e COMPRIMENTO DA SOLA';
+            } else {
+                problemField = 'the combination of HEIGHT, WEIGHT and BOOT SOLE LENGTH';
+            }
         }
         
         return { 
-            error: `❌ No se puede determinar el valor DIN: La combinación de métricas ingresadas no tiene un valor DIN válido en la tabla de referencia.\n\n` +
-                   `Código de Esquiador: ${skierCode}\n` +
-                   `Columna de Longitud de Suela: ${col}\n\n` +
-                   `Por favor verifica ${problemField}. Es posible que necesites ajustar alguno de estos valores para obtener un resultado válido.` 
+            error: '❌ ' + translate('errorNoDINValue').replace('{skierCode}', skierCode).replace('{col}', col).replace('{problemField}', problemField)
         };
     }
     
@@ -796,7 +871,7 @@ function calculateDIN(heightInCm, weightInKg, soleLength, age, level) {
             indicatorType: typeof indicator
         });
         return { 
-            error: `❌ Error en el cálculo del DIN: El valor obtenido de la tabla no es válido. Por favor verifica los campos de ALTURA, PESO, LONGITUD DE SUELA, EDAD y NIVEL.` 
+            error: '❌ ' + translate('errorInvalidDINValue')
         };
     }
     
@@ -1216,6 +1291,618 @@ function setupFormSubmit() {
         
         showResults(resultsData);
     });
+}
+
+// Función para extraer datos del texto reconocido por OCR
+function extractDataFromText(text) {
+    const extracted = {
+        age: null,
+        weight: null,
+        height: null,
+        soleLength: null,
+        type: null
+    };
+    
+    // Normalizar texto: convertir a minúsculas y limpiar
+    // Reemplazar caracteres comúnmente confundidos en escritura manual
+    let normalizedText = text.toLowerCase()
+        .replace(/[0o]/g, '0') // Normalizar ceros y oes
+        .replace(/[1il]/g, '1') // Normalizar unos, ies y eles
+        .replace(/[5s]/g, '5') // Normalizar cincos y eses
+        .replace(/[6g]/g, '6') // Normalizar seises y ges
+        .replace(/\s+/g, ' ');
+    
+    // Extraer edad: buscar patrones más flexibles para escritura manual
+    // Tolerancia a variaciones: "edad", "edod", "edad:", "edad=", "25 años", "25 anos", etc.
+    const agePatterns = [
+        /(?:edad|edod|age|a[ñn]os?|years?)[\s:=]+(\d{1,3})/i,
+        /(\d{1,3})[\s]*(?:a[ñn]os?|years?)/i,
+        /(?:nacido|born|nacio)[\s:=]+(\d{4})/i, // Para calcular edad desde año de nacimiento
+        /(?:a[ñn]o|year)[\s:=]+(\d{4})/i // Año de nacimiento alternativo
+    ];
+    
+    for (const pattern of agePatterns) {
+        const match = normalizedText.match(pattern) || text.match(pattern);
+        if (match) {
+            let age = parseInt(match[1].replace(/[^0-9]/g, '')); // Limpiar caracteres no numéricos
+            // Si es un año de nacimiento (4 dígitos y > 1900)
+            if (age > 1900 && age < 2100) {
+                const currentYear = new Date().getFullYear();
+                age = currentYear - age;
+            }
+            if (age >= 0 && age <= 120) {
+                extracted.age = age;
+                break;
+            }
+        }
+    }
+    
+    // Extraer peso: buscar patrones más flexibles para escritura manual
+    // Tolerancia: "peso", "pesa", "weight", "70 kg", "70kg", "155 lbs", etc.
+    const weightPatterns = [
+        /(?:peso|pesa|weight|masa|w[ei]ight)[\s:=]+(\d{2,3}(?:[.,]\d+)?)[\s]*(?:kg|k[il]los?|kilograms?|lbs?|pounds?|lb)?/i,
+        /(\d{2,3}(?:[.,]\d+)?)[\s]*(?:kg|k[il]los?|kilograms?|lbs?|pounds?|lb)/i,
+        /(?:w|peso|weight)[\s:=]+(\d{2,3}(?:[.,]\d+)?)/i // Solo número después de w/peso/weight
+    ];
+    
+    for (const pattern of weightPatterns) {
+        const match = normalizedText.match(pattern) || text.match(pattern);
+        if (match) {
+            let weightStr = match[1].replace(/,/g, '.'); // Convertir coma a punto decimal
+            let weight = parseFloat(weightStr.replace(/[^0-9.]/g, ''));
+            // Verificar si está en libras
+            const context = normalizedText.substring(Math.max(0, match.index - 10), match.index + match[0].length + 10);
+            const unitMatch = context.match(/(lbs?|pounds?|lb\b)/i);
+            if (unitMatch && weight > 50) { // Si el número es grande y tiene lbs, probablemente son libras
+                weight = converters.lbsToKg(weight);
+            }
+            if (weight >= 10 && weight <= 300) {
+                extracted.weight = weight;
+                break;
+            }
+        }
+    }
+    
+    // Extraer altura: buscar patrones más flexibles para escritura manual
+    // Tolerancia: "altura", "alturo", "height", "175 cm", "5'10"", etc.
+    const heightPatterns = [
+        /(?:altura|alturo|height|estatura|h[ei]ight)[\s:=]+(\d{2,3}(?:[.,]\d+)?)[\s]*(?:cm|centimeters?|metros?|m\b|ft|feet|in|inches?)?/i,
+        /(\d{2,3}(?:[.,]\d+)?)[\s]*(?:cm|centimeters?|metros?|m\b)/i,
+        /(\d{1})[''`´]?\s*(\d{1,2})?[""`´]?/i, // Para pies y pulgadas como 5'10"
+        /(\d{1})[\s]*(?:ft|feet|pie)[\s]*(\d{1,2})?[\s]*(?:in|inches?|pulgadas?)?/i,
+        /(?:h|altura|height)[\s:=]+(\d{2,3}(?:[.,]\d+)?)/i // Solo número después de h/altura/height
+    ];
+    
+    for (const pattern of heightPatterns) {
+        const match = normalizedText.match(pattern) || text.match(pattern);
+        if (match) {
+            if (match[2] !== undefined && match[2] !== '') {
+                // Formato pies y pulgadas (5'10")
+                const feet = parseInt(match[1].replace(/[^0-9]/g, '')) || 0;
+                const inches = parseInt(match[2].replace(/[^0-9]/g, '')) || 0;
+                if (feet >= 2 && feet <= 8 && inches >= 0 && inches <= 11) {
+                    extracted.height = converters.ftInToCm(feet, inches);
+                    break;
+                }
+            } else {
+                // Formato métrico (cm o m)
+                let heightStr = match[1].replace(/,/g, '.');
+                let height = parseFloat(heightStr.replace(/[^0-9.]/g, ''));
+                // Verificar si está en metros
+                const context = normalizedText.substring(Math.max(0, match.index - 10), match.index + match[0].length + 10);
+                const unitMatch = context.match(/(metros?|m\b)/i);
+                if (unitMatch && height < 3) {
+                    height = height * 100; // Convertir metros a cm
+                }
+                // Verificar si está en pies (sin pulgadas)
+                const feetMatch = context.match(/(ft|feet|pie)/i);
+                if (feetMatch && height >= 2 && height <= 8) {
+                    height = height * 30.48; // Convertir pies a cm
+                }
+                if (height >= 50 && height <= 250) {
+                    extracted.height = height;
+                    break;
+                }
+            }
+        }
+    }
+    
+    // Extraer largo de bota (sole length): buscar patrones flexibles
+    // Tolerancia: "largo bota", "largo de bota", "sole length", "boot sole", "suela", etc.
+    const soleLengthPatterns = [
+        /(?:largo|length|longitud)[\s]*(?:de|of)?[\s]*(?:bota|boot|suela|sole|sola)[\s:=]+(\d{3})/i,
+        /(?:bota|boot|suela|sole|sola)[\s]*(?:largo|length|longitud)[\s:=]+(\d{3})/i,
+        /(?:sole|suela|sola|bota)[\s:=]+(\d{3})/i,
+        /(?:sl|sole)[\s:=]+(\d{3})/i, // Abreviaciones
+        /(?:mm|milimetros?)[\s:]+(\d{3})/i // Número seguido de mm (si está cerca de palabras relacionadas)
+    ];
+    
+    for (const pattern of soleLengthPatterns) {
+        const match = normalizedText.match(pattern) || text.match(pattern);
+        if (match) {
+            let soleLength = parseInt(match[1].replace(/[^0-9]/g, ''));
+            if (soleLength >= 200 && soleLength <= 400) { // Rango razonable para boot sole length
+                extracted.soleLength = soleLength;
+                break;
+            }
+        }
+    }
+    
+    // Si no se encontró con palabras clave, buscar números de 3 dígitos en rango 231-350
+    // que estén cerca de contexto relevante
+    if (!extracted.soleLength) {
+        const threeDigitMatches = text.match(/\b(\d{3})\b/g);
+        if (threeDigitMatches) {
+            for (const match of threeDigitMatches) {
+                const num = parseInt(match);
+                if (num >= 231 && num <= 350) {
+                    // Verificar contexto cercano
+                    const contextIndex = text.indexOf(match);
+                    const context = text.substring(Math.max(0, contextIndex - 30), Math.min(text.length, contextIndex + match.length + 30)).toLowerCase();
+                    if (context.match(/(suela|sole|bota|boot|mm|longitud|length|sola)/i)) {
+                        extracted.soleLength = num;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    
+    // Extraer TYPE/Nivel: buscar patrones flexibles para escritura manual
+    // Tolerancia: "TYPE I", "TYPE 1", "TIPO I", "TIPO 1", "Type I", "tipo i", "tipo1", etc.
+    const typePatterns = [
+        /(?:type|tipo|tip[o0]|nivel|level|t)[\s:=]+([1-3i]{1})/i,
+        /(?:type|tipo|tip[o0]|nivel|level)[\s]+([1-3i]{1})/i,
+        /(?:t|type|tipo)[\s]*([1-3i]{1})/i,
+        /\b([1-3i]{1})\b/i // Número solo (1, 2, 3 o I)
+    ];
+    
+    for (const pattern of typePatterns) {
+        const match = normalizedText.match(pattern) || text.match(pattern);
+        if (match) {
+            let typeStr = match[1].toUpperCase();
+            // Convertir romano a número si es necesario
+            let typeNum = null;
+            if (typeStr === 'I' || typeStr === '1' || typeStr === 'i') {
+                typeNum = 1;
+            } else if (typeStr === 'II' || typeStr === '2') {
+                typeNum = 2;
+            } else if (typeStr === 'III' || typeStr === '3') {
+                typeNum = 3;
+            } else {
+                typeNum = parseInt(typeStr);
+            }
+            
+            // Verificar contexto para asegurar que es un TYPE
+            const contextIndex = normalizedText.indexOf(match[0]);
+            const context = normalizedText.substring(Math.max(0, contextIndex - 20), Math.min(normalizedText.length, contextIndex + match[0].length + 20));
+            
+            if ((typeNum >= 1 && typeNum <= 3) && 
+                (context.match(/(type|tipo|tip[o0]|nivel|level)/i) || match[0].match(/(type|tipo|nivel|level)/i))) {
+                extracted.type = typeNum.toString();
+                break;
+            }
+        }
+    }
+    
+    // Si no se encontró con palabras clave, buscar I, II, III o 1, 2, 3 solos
+    // pero solo si hay indicadores de que es un formulario de esquí
+    if (!extracted.type) {
+        const skiContext = normalizedText.match(/(esqui|ski|din|esquiador|skier)/i);
+        if (skiContext) {
+            const typeOnlyMatch = normalizedText.match(/\b([1-3i]{1,3})\b/i);
+            if (typeOnlyMatch) {
+                let typeStr = typeOnlyMatch[1].toUpperCase();
+                if (typeStr === 'I' || typeStr === '1') {
+                    extracted.type = '1';
+                } else if (typeStr === 'II' || typeStr === '2') {
+                    extracted.type = '2';
+                } else if (typeStr === 'III' || typeStr === '3') {
+                    extracted.type = '3';
+                }
+            }
+        }
+    }
+    
+    return extracted;
+}
+
+// Configurar cámara para medición con OCR
+async function setupCameraMeasurement() {
+    const cameraBtn = document.getElementById('cameraMeasureBtn');
+    const cameraModal = document.getElementById('cameraModal');
+    const closeCameraBtn = document.getElementById('closeCameraModal');
+    const startCameraBtn = document.getElementById('startCameraBtn');
+    const captureBtn = document.getElementById('capturePhotoBtn');
+    const stopCameraBtn = document.getElementById('stopCameraBtn');
+    const cameraVideo = document.getElementById('cameraVideo');
+    const cameraCanvas = document.getElementById('cameraCanvas');
+    const ocrProcessing = document.getElementById('ocrProcessing');
+    const ocrStatus = document.getElementById('ocrStatus');
+    const cameraResult = document.getElementById('cameraResult');
+    
+    let stream = null;
+    let ocrWorker = null;
+    
+    // Verificar si la cámara está disponible
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        if (cameraBtn) cameraBtn.style.display = 'inline-block';
+    }
+    
+    // Inicializar worker de Tesseract
+    async function initOCR() {
+        if (!ocrWorker) {
+            try {
+                ocrWorker = await createWorker('eng+spa+por', 1, {
+                    logger: m => {
+                        if (ocrStatus && m.status === 'recognizing text') {
+                            ocrStatus.textContent = translate('ocrRecognizing');
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error initializing OCR:', error);
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    // Abrir modal de cámara
+    if (cameraBtn && cameraModal) {
+        cameraBtn.addEventListener('click', async () => {
+            cameraModal.style.display = 'flex';
+            // Inicializar OCR cuando se abre el modal
+            if (ocrProcessing) {
+                ocrProcessing.style.display = 'none';
+            }
+            await initOCR();
+        });
+    }
+    
+    // Cerrar modal
+    if (closeCameraBtn && cameraModal) {
+        closeCameraBtn.addEventListener('click', () => {
+            stopCamera();
+            cameraModal.style.display = 'none';
+        });
+    }
+    
+    // Cerrar al hacer clic fuera
+    if (cameraModal) {
+        cameraModal.addEventListener('click', (e) => {
+            if (e.target === cameraModal) {
+                stopCamera();
+                cameraModal.style.display = 'none';
+            }
+        });
+    }
+    
+    // Iniciar cámara
+    if (startCameraBtn) {
+        startCameraBtn.addEventListener('click', async () => {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: 'environment',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    } 
+                });
+                if (cameraVideo) {
+                    cameraVideo.srcObject = stream;
+                    cameraVideo.hidden = false;
+                }
+                if (startCameraBtn) startCameraBtn.style.display = 'none';
+                if (captureBtn) captureBtn.style.display = 'inline-block';
+                if (stopCameraBtn) stopCameraBtn.style.display = 'inline-block';
+            } catch (error) {
+                alert('Error accessing camera: ' + error.message);
+            }
+        });
+    }
+    
+    // Capturar foto y procesar con OCR
+    if (captureBtn && cameraVideo && cameraCanvas) {
+        captureBtn.addEventListener('click', async () => {
+            if (!ocrWorker) {
+                const initialized = await initOCR();
+                if (!initialized) {
+                    alert('Error initializing OCR. Please try again.');
+                    return;
+                }
+            }
+            
+            // Capturar imagen del video
+            cameraCanvas.width = cameraVideo.videoWidth;
+            cameraCanvas.height = cameraVideo.videoHeight;
+            const ctx = cameraCanvas.getContext('2d');
+            ctx.drawImage(cameraVideo, 0, 0);
+            
+            // Mostrar estado de procesamiento
+            if (ocrProcessing) {
+                ocrProcessing.style.display = 'block';
+            }
+            if (ocrStatus) {
+                ocrStatus.textContent = translate('ocrProcessing');
+            }
+            
+            try {
+                // Procesar imagen con OCR
+                const { data: { text } } = await ocrWorker.recognize(cameraCanvas);
+                
+                // Extraer datos del texto
+                const extracted = extractDataFromText(text);
+                
+                // Ocultar estado de procesamiento
+                if (ocrProcessing) {
+                    ocrProcessing.style.display = 'none';
+                }
+                
+                // Mostrar resultados
+                let resultHTML = '<div style="margin-bottom: 16px;"><strong>' + translate('ocrDataFound') + '</strong><br>';
+                let hasData = false;
+                const missingFields = [];
+                
+                const ageLabel = appState.currentLang === 'es' ? 'Edad' : appState.currentLang === 'pt' ? 'Idade' : 'Age';
+                const weightLabel = appState.currentLang === 'es' ? 'Peso' : appState.currentLang === 'pt' ? 'Peso' : 'Weight';
+                const heightLabel = appState.currentLang === 'es' ? 'Altura' : appState.currentLang === 'pt' ? 'Altura' : 'Height';
+                const ageUnit = appState.currentLang === 'es' ? 'años' : appState.currentLang === 'pt' ? 'anos' : 'years';
+                
+                if (extracted.age !== null) {
+                    resultHTML += `• ${ageLabel}: ${extracted.age} ${ageUnit}<br>`;
+                    hasData = true;
+                } else {
+                    missingFields.push('age');
+                }
+                
+                if (extracted.weight !== null) {
+                    resultHTML += `• ${weightLabel}: ${extracted.weight.toFixed(1)} kg<br>`;
+                    hasData = true;
+                } else {
+                    missingFields.push('weight');
+                }
+                
+                if (extracted.height !== null) {
+                    resultHTML += `• ${heightLabel}: ${extracted.height.toFixed(1)} cm<br>`;
+                    hasData = true;
+                } else {
+                    missingFields.push('height');
+                }
+                
+                const soleLengthLabel = appState.currentLang === 'es' ? 'Largo de Bota' : appState.currentLang === 'pt' ? 'Comprimento da Bota' : 'Boot Sole Length';
+                if (extracted.soleLength !== null) {
+                    resultHTML += `• ${soleLengthLabel}: ${extracted.soleLength} mm<br>`;
+                    hasData = true;
+                } else {
+                    missingFields.push('soleLength');
+                }
+                
+                const typeLabel = appState.currentLang === 'es' ? 'Nivel (Type)' : appState.currentLang === 'pt' ? 'Nível (Type)' : 'Level (Type)';
+                if (extracted.type !== null) {
+                    resultHTML += `• ${typeLabel}: TYPE ${extracted.type}<br>`;
+                    hasData = true;
+                } else {
+                    missingFields.push('type');
+                }
+                
+                resultHTML += '</div>';
+                
+                if (!hasData) {
+                    // No se encontró ningún dato
+                    resultHTML = '<p style="color: #ffa500; margin-bottom: 16px;">' + translate('ocrNoDataFound') + '</p>';
+                    resultHTML += '<button type="button" class="btn btn-secondary-custom" id="enterManuallyBtn" style="width: 100%;">' + translate('enterManually') + '</button>';
+                } else {
+                    // Hay algunos datos, mostrar botón para usar y otro para ingresar manualmente lo que falta
+                    resultHTML += '<div style="display: flex; gap: 8px; flex-wrap: wrap;">';
+                    resultHTML += '<button type="button" class="btn btn-primary-custom" id="useOCRDataBtn" style="flex: 1;">' + translate('useRecognizedData') + '</button>';
+                    if (missingFields.length > 0) {
+                        resultHTML += '<button type="button" class="btn btn-secondary-custom" id="enterManuallyBtn" style="flex: 1;">' + translate('enterManually') + '</button>';
+                    }
+                    resultHTML += '</div>';
+                }
+                
+                if (cameraResult) {
+                    cameraResult.innerHTML = resultHTML;
+                    cameraResult.style.display = 'block';
+                }
+                
+                // Manejar botón de usar datos OCR
+                const useOCRBtn = document.getElementById('useOCRDataBtn');
+                if (useOCRBtn) {
+                    useOCRBtn.addEventListener('click', () => {
+                        // Llenar formulario con datos reconocidos
+                        if (extracted.height !== null) {
+                            if (appState.heightUnit === 'ft') {
+                                const { feet, inches } = converters.cmToFtIn(extracted.height);
+                                const heightFtInInput = document.getElementById('heightFtIn');
+                                if (heightFtInInput) {
+                                    heightFtInInput.value = `${feet}'${inches}"`;
+                                }
+                            } else {
+                                const heightCmInput = document.getElementById('heightCm');
+                                if (heightCmInput) {
+                                    heightCmInput.value = extracted.height.toFixed(1);
+                                }
+                            }
+                        }
+                        
+                        if (extracted.weight !== null) {
+                            const weightInput = document.getElementById('weight');
+                            if (weightInput) {
+                                // Convertir a la unidad actual
+                                if (appState.weightUnit === 'lbs') {
+                                    weightInput.value = converters.kgToLbs(extracted.weight).toFixed(1);
+                                } else {
+                                    weightInput.value = extracted.weight.toFixed(1);
+                                }
+                            }
+                        }
+                        
+                        if (extracted.age !== null) {
+                            // Seleccionar rango de edad apropiado
+                            const ageOptions = document.querySelectorAll('.age-option');
+                            if (extracted.age <= 9) {
+                                appState.selectedAge = 'under10';
+                            } else if (extracted.age >= 50) {
+                                appState.selectedAge = 'over50';
+                            } else {
+                                appState.selectedAge = '10-49';
+                            }
+                            
+                            ageOptions.forEach(opt => {
+                                opt.classList.remove('active');
+                                if (opt.getAttribute('data-age') === appState.selectedAge) {
+                                    opt.classList.add('active');
+                                }
+                            });
+                        }
+                        
+                        if (extracted.soleLength !== null) {
+                            // Llenar campo de largo de bota
+                            const soleLengthInput = document.getElementById('soleLength');
+                            if (soleLengthInput) {
+                                soleLengthInput.value = extracted.soleLength;
+                            }
+                        }
+                        
+                        if (extracted.type !== null) {
+                            // Seleccionar nivel de esquí
+                            const skillLevelCards = document.querySelectorAll('.skill-level-card');
+                            skillLevelCards.forEach(card => {
+                                card.classList.remove('active');
+                                if (card.getAttribute('data-level') === extracted.type) {
+                                    card.classList.add('active');
+                                    appState.selectedLevel = extracted.type;
+                                }
+                            });
+                        }
+                        
+                        stopCamera();
+                        cameraModal.style.display = 'none';
+                    });
+                }
+                
+                // Manejar botón de ingresar manualmente
+                const enterManuallyBtn = document.getElementById('enterManuallyBtn');
+                if (enterManuallyBtn) {
+                    enterManuallyBtn.addEventListener('click', () => {
+                        // Si hay datos parciales, llenar los que se reconocieron
+                        if (extracted.height !== null) {
+                            if (appState.heightUnit === 'ft') {
+                                const { feet, inches } = converters.cmToFtIn(extracted.height);
+                                const heightFtInInput = document.getElementById('heightFtIn');
+                                if (heightFtInInput) heightFtInInput.value = `${feet}'${inches}"`;
+                            } else {
+                                const heightCmInput = document.getElementById('heightCm');
+                                if (heightCmInput) heightCmInput.value = extracted.height.toFixed(1);
+                            }
+                        }
+                        
+                        if (extracted.weight !== null) {
+                            const weightInput = document.getElementById('weight');
+                            if (weightInput) {
+                                if (appState.weightUnit === 'lbs') {
+                                    weightInput.value = converters.kgToLbs(extracted.weight).toFixed(1);
+                                } else {
+                                    weightInput.value = extracted.weight.toFixed(1);
+                                }
+                            }
+                        }
+                        
+                        if (extracted.age !== null) {
+                            const ageOptions = document.querySelectorAll('.age-option');
+                            if (extracted.age <= 9) {
+                                appState.selectedAge = 'under10';
+                            } else if (extracted.age >= 50) {
+                                appState.selectedAge = 'over50';
+                            } else {
+                                appState.selectedAge = '10-49';
+                            }
+                            ageOptions.forEach(opt => {
+                                opt.classList.remove('active');
+                                if (opt.getAttribute('data-age') === appState.selectedAge) {
+                                    opt.classList.add('active');
+                                }
+                            });
+                        }
+                        
+                        if (extracted.soleLength !== null) {
+                            const soleLengthInput = document.getElementById('soleLength');
+                            if (soleLengthInput) soleLengthInput.value = extracted.soleLength;
+                        }
+                        
+                        if (extracted.type !== null) {
+                            const skillLevelCards = document.querySelectorAll('.skill-level-card');
+                            skillLevelCards.forEach(card => {
+                                card.classList.remove('active');
+                                if (card.getAttribute('data-level') === extracted.type) {
+                                    card.classList.add('active');
+                                    appState.selectedLevel = extracted.type;
+                                }
+                            });
+                        }
+                        
+                        stopCamera();
+                        cameraModal.style.display = 'none';
+                        
+                        // Focus en el primer campo que falta
+                        if (missingFields.includes('height')) {
+                            setTimeout(() => {
+                                const heightInput = appState.heightUnit === 'ft' 
+                                    ? document.getElementById('heightFtIn') 
+                                    : document.getElementById('heightCm');
+                                heightInput?.focus();
+                            }, 300);
+                        } else if (missingFields.includes('weight')) {
+                            setTimeout(() => document.getElementById('weight')?.focus(), 300);
+                        } else if (missingFields.includes('soleLength')) {
+                            setTimeout(() => document.getElementById('soleLength')?.focus(), 300);
+                        } else if (missingFields.includes('type')) {
+                            // Abrir sección avanzada si está cerrada
+                            const advancedToggle = document.getElementById('toggleAdvanced');
+                            const advancedContent = document.getElementById('advancedContent');
+                            if (advancedToggle && advancedContent && !advancedContent.classList.contains('show')) {
+                                advancedToggle.click();
+                            }
+                        }
+                    });
+                }
+                
+            } catch (error) {
+                console.error('OCR Error:', error);
+                if (ocrProcessing) ocrProcessing.style.display = 'none';
+                if (cameraResult) {
+                    cameraResult.innerHTML = '<p style="color: #ff6b6b;">Error processing image. Please try again or enter data manually.</p>';
+                    cameraResult.style.display = 'block';
+                }
+            }
+        });
+    }
+    
+    // Detener cámara
+    function stopCamera() {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            stream = null;
+        }
+        if (cameraVideo) {
+            cameraVideo.srcObject = null;
+            cameraVideo.hidden = true;
+        }
+        if (startCameraBtn) startCameraBtn.style.display = 'inline-block';
+        if (captureBtn) captureBtn.style.display = 'none';
+        if (stopCameraBtn) stopCameraBtn.style.display = 'none';
+        if (cameraResult) {
+            cameraResult.style.display = 'none';
+            cameraResult.innerHTML = '';
+        }
+        if (ocrProcessing) ocrProcessing.style.display = 'none';
+    }
+    
+    if (stopCameraBtn) {
+        stopCameraBtn.addEventListener('click', stopCamera);
+    }
 }
 
 // Inicializar cuando el DOM esté listo

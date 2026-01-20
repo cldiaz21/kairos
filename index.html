@@ -126,14 +126,9 @@
                         mm
                     </span>
                 </div>
-                <div style="display: flex; gap: 12px; align-items: center; margin-top: 8px; flex-wrap: wrap;">
-                    <button type="button" class="view-measures-btn" id="viewMeasuresBtn" data-i18n="viewMeasures">
-                        <i class="fas fa-ruler"></i> <span>View Measures</span>
-                    </button>
-                    <button type="button" class="view-measures-btn" id="cameraMeasureBtn" style="display: none;" data-i18n="measureWithCamera">
-                        <i class="fas fa-camera"></i> <span>Measure with Camera</span>
-                    </button>
-                </div>
+                <button type="button" class="view-measures-btn" id="viewMeasuresBtn" data-i18n="viewMeasures">
+                    <i class="fas fa-ruler"></i> <span>View Measures</span>
+                </button>
             </div>
             
             <!-- Sección Advanced Metrics -->
@@ -180,9 +175,17 @@
             </div>
             
             <!-- Footer CTA -->
-            <button type="submit" class="btn btn-primary-custom" id="calculateBtn" data-i18n="calculateBtn">
-                CALCULATE DIN
-            </button>
+            <div style="display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap;">
+                <button type="submit" class="btn btn-primary-custom" id="calculateBtn" data-i18n="calculateBtn">
+                    CALCULATE DIN
+                </button>
+                <button type="button" class="btn btn-primary-custom" id="cameraMeasureBtn" style="display: none; min-width: 60px; padding: 12px; aspect-ratio: 1;" title="Measure with Camera">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M23 19C23 19.5304 22.7893 20.0391 22.4142 20.4142C22.0391 20.7893 21.5304 21 21 21H3C2.46957 21 1.96086 20.7893 1.58579 20.4142C1.21071 20.0391 1 19.5304 1 19V8C1 7.46957 1.21071 6.96086 1.58579 6.58579C1.96086 6.21071 2.46957 6 3 6H7L9 4H15L17 6H21C21.5304 6 22.0391 6.21071 22.4142 6.58579C22.7893 6.96086 23 7.46957 23 8V19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <circle cx="12" cy="13" r="4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
         </form>
         
         <!-- Footer -->
@@ -353,10 +356,7 @@
                     </button>
                 </div>
                 <div id="cameraResult" style="margin-top: 20px; padding: 16px; background: rgba(51, 65, 85, 0.3); border-radius: 8px; display: none;">
-                    <p style="margin-bottom: 12px;"><strong data-i18n="measuredLength">Measured Length:</strong> <span id="measuredLength">-</span> mm</p>
-                    <button type="button" class="btn btn-primary-custom" id="useMeasurementBtn" data-i18n="useMeasurement">
-                        Use This Measurement
-                    </button>
+                    <!-- Los resultados de OCR se insertarán aquí dinámicamente -->
                 </div>
             </div>
         </div>

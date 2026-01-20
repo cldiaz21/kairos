@@ -21,5 +21,8 @@
   "devDependencies": {
     "vite": "^7.3.0",
     "terser": "^5.36.0"
+  },
+  "dependencies": {
+    "tesseract.js": "^5.0.4"
   }
 }
