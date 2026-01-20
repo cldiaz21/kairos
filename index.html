@@ -126,9 +126,14 @@
                         mm
                     </span>
                 </div>
-                <button type="button" class="view-measures-btn" id="viewMeasuresBtn" data-i18n="viewMeasures">
-                    <i class="fas fa-ruler"></i> <span>View Measures</span>
-                </button>
+                <div style="display: flex; gap: 12px; align-items: center; margin-top: 8px; flex-wrap: wrap;">
+                    <button type="button" class="view-measures-btn" id="viewMeasuresBtn" data-i18n="viewMeasures">
+                        <i class="fas fa-ruler"></i> <span>View Measures</span>
+                    </button>
+                    <button type="button" class="view-measures-btn" id="cameraMeasureBtn" style="display: none;" data-i18n="measureWithCamera">
+                        <i class="fas fa-camera"></i> <span>Measure with Camera</span>
+                    </button>
+                </div>
             </div>
             
             <!-- Sección Advanced Metrics -->
@@ -285,9 +290,74 @@
                         <div class="din-number" id="dinValue">-</div>
                     </div>
                 </div>
-                <button type="button" class="btn btn-secondary-custom" id="calculateAnotherBtn" data-i18n="calculateAnother">
+                
+                <!-- Recomendaciones de Equipo -->
+                <div class="recommendations-section" id="recommendationsSection" style="display: none;">
+                    <h3 style="margin-top: 24px; margin-bottom: 16px; color: var(--accent-cyan); font-size: 1.1rem;">Equipment Recommendations</h3>
+                    <div class="result-item">
+                        <span class="result-label">Pole Length:</span>
+                        <span class="result-value" id="resultPoleLength">-</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Ski Length:</span>
+                        <span class="result-value" id="resultSkiLength">-</span>
+                    </div>
+                    <div id="recommendationNotes" style="margin-top: 12px; padding: 12px; background: rgba(51, 65, 85, 0.3); border-radius: 8px; font-size: 0.85rem; color: var(--text-secondary);"></div>
+                </div>
+                
+                <!-- Alertas y Advertencias -->
+                <div class="warnings-section" id="warningsSection" style="display: none; margin-top: 20px; padding: 16px; background: rgba(255, 165, 0, 0.1); border-left: 3px solid #ffa500; border-radius: 8px;">
+                    <h4 style="margin-bottom: 12px; color: #ffa500; font-size: 0.95rem;">⚠️ Important Notices</h4>
+                    <div id="warningsList" style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6;"></div>
+                </div>
+                
+                <button type="button" class="btn btn-secondary-custom" id="calculateAnotherBtn" data-i18n="calculateAnother" style="margin-top: 24px;">
                     Calculate Another DIN
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Cámara de Medición -->
+    <div class="modal-overlay" id="cameraModal" style="display: none;">
+        <div class="modal-content" style="max-width: 90%; max-height: 90vh;">
+            <button type="button" class="modal-close" id="closeCameraModal">
+                <i class="fas fa-times"></i>
+            </button>
+            <h2 class="modal-title" data-i18n="cameraModalTitle">Measure with Camera</h2>
+            <div class="modal-body">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <p style="color: var(--text-secondary); margin-bottom: 16px;" data-i18n="cameraInstructions">
+                        Place a reference object (like a credit card) next to the boot sole and capture a photo.
+                    </p>
+                    <video id="cameraVideo" autoplay playsinline style="width: 100%; max-width: 500px; border-radius: 8px; background: #000;" hidden></video>
+                    <canvas id="cameraCanvas" style="display: none;"></canvas>
+                    <div id="cameraInstructions" style="padding: 20px; background: rgba(51, 65, 85, 0.3); border-radius: 8px; margin-top: 16px;">
+                        <p style="font-size: 0.9rem; line-height: 1.6;">
+                            <span data-i18n="cameraHowTo">📸 How to measure:</span><br>
+                            <span data-i18n="cameraStep1">1. Place a credit card (85.6mm wide) or ruler next to the boot sole</span><br>
+                            <span data-i18n="cameraStep2">2. Position the camera directly above</span><br>
+                            <span data-i18n="cameraStep3">3. Tap to capture and analyze</span>
+                        </p>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                    <button type="button" class="btn btn-secondary-custom" id="startCameraBtn" data-i18n="startCamera">
+                        <i class="fas fa-camera"></i> Start Camera
+                    </button>
+                    <button type="button" class="btn btn-secondary-custom" id="capturePhotoBtn" style="display: none;" data-i18n="capturePhoto">
+                        <i class="fas fa-camera-retro"></i> Capture
+                    </button>
+                    <button type="button" class="btn btn-secondary-custom" id="stopCameraBtn" style="display: none;" data-i18n="stopCamera">
+                        <i class="fas fa-stop"></i> Stop
+                    </button>
+                </div>
+                <div id="cameraResult" style="margin-top: 20px; padding: 16px; background: rgba(51, 65, 85, 0.3); border-radius: 8px; display: none;">
+                    <p style="margin-bottom: 12px;"><strong data-i18n="measuredLength">Measured Length:</strong> <span id="measuredLength">-</span> mm</p>
+                    <button type="button" class="btn btn-primary-custom" id="useMeasurementBtn" data-i18n="useMeasurement">
+                        Use This Measurement
+                    </button>
+                </div>
             </div>
         </div>
     </div>

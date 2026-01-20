@@ -46,7 +46,35 @@ const translations = {
         dinValue: 'Valor DIN Recomendado',
         calculateAnother: 'Calcular otro DIN',
         viewMeasures: 'Ver Medidas',
-        measuresTitle: 'Tabla de Medidas de Longitud de Suela'
+        measuresTitle: 'Tabla de Medidas de Longitud de Suela',
+        equipmentRecommendations: 'Recomendaciones de Equipo',
+        poleLength: 'Largo de Bastones:',
+        skiLength: 'Largo de Ski:',
+        importantNotices: 'Avisos Importantes',
+        measureWithCamera: 'Medir con Cámara',
+        cameraModalTitle: 'Medir con Cámara',
+        cameraInstructions: 'Coloca un objeto de referencia (como una tarjeta de crédito) junto a la suela de la bota y captura una foto.',
+        cameraHowTo: '📸 Cómo medir:',
+        cameraStep1: '1. Coloca una tarjeta de crédito (85.6mm de ancho) o regla junto a la suela de la bota',
+        cameraStep2: '2. Posiciona la cámara directamente arriba',
+        cameraStep3: '3. Toca para capturar y analizar',
+        startCamera: 'Iniciar Cámara',
+        capturePhoto: 'Capturar',
+        stopCamera: 'Detener',
+        measuredLength: 'Longitud Medida:',
+        useMeasurement: 'Usar Esta Medida',
+        warningHeightLow: 'Altura muy baja: {value} cm. Por favor verifica que la altura sea correcta.',
+        warningHeightHigh: 'Altura muy alta: {value} cm. Por favor verifica que la altura sea correcta.',
+        warningWeightLow: 'Peso muy bajo: {kg} kg ({lbs} lbs). Por favor verifica que el peso sea correcto.',
+        warningWeightHigh: 'Peso muy alto: {kg} kg ({lbs} lbs). Por favor verifica que el peso sea correcto.',
+        warningCombination: 'La combinación de altura ({height} cm) y peso ({weight} kg) parece incongruente. Por favor verifica ambos valores.',
+        warningAgeUnder10: 'Edad ≤9 años: Se recomienda supervisión profesional para el ajuste del equipo de esquí.',
+        warningAgeOver50: 'Edad 50+: Se recomienda consultar con un técnico especializado para ajustes adicionales de seguridad.',
+        alertAgeUnder10: '⚠️ Edad ≤9 años: Se recomienda supervisión profesional para el ajuste del equipo de esquí. El cálculo DIN puede requerir ajustes adicionales.',
+        alertAgeOver50: '⚠️ Edad 50+: Se recomienda consultar con un técnico especializado para ajustes adicionales de seguridad y comodidad.',
+        recommendationNoteKids: 'Para niños, se recomienda un ski ligeramente más corto para facilitar el control.',
+        recommendationNoteAdults: 'Para esquiadores intermedios/avanzados, el largo puede extenderse hasta 10cm más que la altura.',
+        recommendationNoteSeniors: 'Para esquiadores de 50+, se recomienda un ski más corto para mayor facilidad de giro.'
     },
     en: {
         subtitle: 'Precision Ski Fitting',
@@ -79,7 +107,35 @@ const translations = {
         dinValue: 'Recommended DIN Value',
         calculateAnother: 'Calculate Another DIN',
         viewMeasures: 'View Measures',
-        measuresTitle: 'Boot Sole Length Measures'
+        measuresTitle: 'Boot Sole Length Measures',
+        equipmentRecommendations: 'Equipment Recommendations',
+        poleLength: 'Pole Length:',
+        skiLength: 'Ski Length:',
+        importantNotices: 'Important Notices',
+        measureWithCamera: 'Measure with Camera',
+        cameraModalTitle: 'Measure with Camera',
+        cameraInstructions: 'Place a reference object (like a credit card) next to the boot sole and capture a photo.',
+        cameraHowTo: '📸 How to measure:',
+        cameraStep1: '1. Place a credit card (85.6mm wide) or ruler next to the boot sole',
+        cameraStep2: '2. Position the camera directly above',
+        cameraStep3: '3. Tap to capture and analyze',
+        startCamera: 'Start Camera',
+        capturePhoto: 'Capture',
+        stopCamera: 'Stop',
+        measuredLength: 'Measured Length:',
+        useMeasurement: 'Use This Measurement',
+        warningHeightLow: 'Very low height: {value} cm. Please verify that the height is correct.',
+        warningHeightHigh: 'Very high height: {value} cm. Please verify that the height is correct.',
+        warningWeightLow: 'Very low weight: {kg} kg ({lbs} lbs). Please verify that the weight is correct.',
+        warningWeightHigh: 'Very high weight: {kg} kg ({lbs} lbs). Please verify that the weight is correct.',
+        warningCombination: 'The combination of height ({height} cm) and weight ({weight} kg) seems inconsistent. Please verify both values.',
+        warningAgeUnder10: 'Age ≤9 years: Professional supervision is recommended for ski equipment adjustment.',
+        warningAgeOver50: 'Age 50+: It is recommended to consult with a specialized technician for additional safety adjustments.',
+        alertAgeUnder10: '⚠️ Age ≤9 years: Professional supervision is recommended for ski equipment adjustment. DIN calculation may require additional adjustments.',
+        alertAgeOver50: '⚠️ Age 50+: It is recommended to consult with a specialized technician for additional safety and comfort adjustments.',
+        recommendationNoteKids: 'For children, a slightly shorter ski is recommended to facilitate control.',
+        recommendationNoteAdults: 'For intermediate/advanced skiers, the length can be extended up to 10cm more than height.',
+        recommendationNoteSeniors: 'For skiers 50+, a shorter ski is recommended for greater ease of turning.'
     },
     pt: {
         subtitle: 'Precision Ski Fitting',
@@ -112,7 +168,35 @@ const translations = {
         dinValue: 'Valor DIN Recomendado',
         calculateAnother: 'Calcular outro DIN',
         viewMeasures: 'Ver Medidas',
-        measuresTitle: 'Tabela de Medidas de Comprimento da Sola'
+        measuresTitle: 'Tabela de Medidas de Comprimento da Sola',
+        equipmentRecommendations: 'Recomendações de Equipamento',
+        poleLength: 'Comprimento de Bastões:',
+        skiLength: 'Comprimento de Esqui:',
+        importantNotices: 'Avisos Importantes',
+        measureWithCamera: 'Medir com Câmera',
+        cameraModalTitle: 'Medir com Câmera',
+        cameraInstructions: 'Coloque um objeto de referência (como um cartão de crédito) ao lado da sola da bota e capture uma foto.',
+        cameraHowTo: '📸 Como medir:',
+        cameraStep1: '1. Coloque um cartão de crédito (85.6mm de largura) ou régua ao lado da sola da bota',
+        cameraStep2: '2. Posicione a câmera diretamente acima',
+        cameraStep3: '3. Toque para capturar e analisar',
+        startCamera: 'Iniciar Câmera',
+        capturePhoto: 'Capturar',
+        stopCamera: 'Parar',
+        measuredLength: 'Comprimento Medido:',
+        useMeasurement: 'Usar Esta Medida',
+        warningHeightLow: 'Altura muito baixa: {value} cm. Por favor verifique se a altura está correta.',
+        warningHeightHigh: 'Altura muito alta: {value} cm. Por favor verifique se a altura está correta.',
+        warningWeightLow: 'Peso muito baixo: {kg} kg ({lbs} lbs). Por favor verifique se o peso está correto.',
+        warningWeightHigh: 'Peso muito alto: {kg} kg ({lbs} lbs). Por favor verifique se o peso está correto.',
+        warningCombination: 'A combinação de altura ({height} cm) e peso ({weight} kg) parece inconsistente. Por favor verifique ambos os valores.',
+        warningAgeUnder10: 'Idade ≤9 anos: Supervisão profissional é recomendada para ajuste do equipamento de esqui.',
+        warningAgeOver50: 'Idade 50+: É recomendado consultar com um técnico especializado para ajustes adicionais de segurança.',
+        alertAgeUnder10: '⚠️ Idade ≤9 anos: Supervisão profissional é recomendada para ajuste do equipamento de esqui. O cálculo DIN pode requerer ajustes adicionais.',
+        alertAgeOver50: '⚠️ Idade 50+: É recomendado consultar com um técnico especializado para ajustes adicionais de segurança e conforto.',
+        recommendationNoteKids: 'Para crianças, um esqui ligeiramente mais curto é recomendado para facilitar o controle.',
+        recommendationNoteAdults: 'Para esquiadores intermediários/avançados, o comprimento pode ser estendido até 10cm mais que a altura.',
+        recommendationNoteSeniors: 'Para esquiadores de 50+, um esqui mais curto é recomendado para maior facilidade de giro.'
     }
 };
 
@@ -167,6 +251,7 @@ function init() {
     setupModal();
     setupResultsModal();
     setupMeasuresModal();
+    setupCameraMeasurement();
     // Actualizar traducciones al inicializar
     updateTranslations();
     console.log('KAIROS: Aplicación inicializada');
@@ -424,6 +509,123 @@ function getIndicatorMatrix() {
     ];
 }
 
+// Función para validar valores extremos e incongruentes
+function validateExtremeValues(heightInCm, weightInKg, age) {
+    const warnings = [];
+    const heightInInches = heightInCm / 2.54;
+    const weightInLbs = converters.kgToLbs(weightInKg);
+    
+    // Validar altura muy baja
+    if (heightInCm < 100) {
+        warnings.push({
+            type: 'warning',
+            field: 'height',
+            message: '⚠️ ' + translate('warningHeightLow').replace('{value}', heightInCm.toFixed(1))
+        });
+    }
+    
+    // Validar altura extremadamente alta
+    if (heightInCm > 220) {
+        warnings.push({
+            type: 'warning',
+            field: 'height',
+            message: '⚠️ ' + translate('warningHeightHigh').replace('{value}', heightInCm.toFixed(1))
+        });
+    }
+    
+    // Validar peso muy bajo
+    if (weightInLbs < 30) {
+        warnings.push({
+            type: 'warning',
+            field: 'weight',
+            message: '⚠️ ' + translate('warningWeightLow').replace('{kg}', weightInKg.toFixed(1)).replace('{lbs}', weightInLbs.toFixed(1))
+        });
+    }
+    
+    // Validar peso extremadamente alto
+    if (weightInLbs > 300) {
+        warnings.push({
+            type: 'warning',
+            field: 'weight',
+            message: '⚠️ ' + translate('warningWeightHigh').replace('{kg}', weightInKg.toFixed(1)).replace('{lbs}', weightInLbs.toFixed(1))
+        });
+    }
+    
+    // Validar proporción altura/peso incongruente
+    const bmi = weightInKg / ((heightInCm / 100) ** 2);
+    if (bmi < 12 || bmi > 50) {
+        warnings.push({
+            type: 'warning',
+            field: 'combination',
+            message: '⚠️ ' + translate('warningCombination').replace('{height}', heightInCm.toFixed(1)).replace('{weight}', weightInKg.toFixed(1))
+        });
+    }
+    
+    // Validar edad extrema
+    let ageValue;
+    if (age === 'under10') {
+        ageValue = 5;
+        warnings.push({
+            type: 'age',
+            field: 'age',
+            message: translate('warningAgeUnder10')
+        });
+    } else if (age === 'over50') {
+        ageValue = 50;
+        warnings.push({
+            type: 'age',
+            field: 'age',
+            message: translate('warningAgeOver50')
+        });
+    }
+    
+    return warnings;
+}
+
+// Función para calcular recomendaciones de bastones y ski
+function calculateEquipmentRecommendations(heightInCm, age) {
+    const recommendations = {
+        poleLength: null,
+        skiLength: null,
+        notes: []
+    };
+    
+    // Conversión de altura
+    const heightInInches = heightInCm / 2.54;
+    
+    // Recomendación de bastones: aproximadamente 65-70% de la altura
+    // Fórmula estándar: altura en cm * 0.65 - 5cm (ajuste para empuñadura)
+    const poleLengthCm = (heightInCm * 0.65) - 5;
+    recommendations.poleLength = Math.round(poleLengthCm / 5) * 5; // Redondear a múltiplos de 5cm
+    
+    // Recomendación de largo de ski basado en altura y edad
+    let skiMultiplier;
+    if (age === 'under10') {
+        // Niños: ski más corto (hasta la altura o ligeramente más corto)
+        skiMultiplier = 0.95;
+        recommendations.notes.push(translate('recommendationNoteKids'));
+    } else if (age === 'over50') {
+        // Personas mayores: ski más corto para mayor control
+        skiMultiplier = 0.92;
+        recommendations.notes.push(translate('recommendationNoteSeniors'));
+    } else {
+        // Adultos: ski entre altura y altura + 10cm
+        skiMultiplier = 1.02;
+        recommendations.notes.push(translate('recommendationNoteAdults'));
+    }
+    
+    const skiLengthCm = heightInCm * skiMultiplier;
+    recommendations.skiLength = Math.round(skiLengthCm / 5) * 5; // Redondear a múltiplos de 5cm
+    
+    // Validar rangos razonables
+    if (recommendations.poleLength < 80) recommendations.poleLength = 80;
+    if (recommendations.poleLength > 160) recommendations.poleLength = 160;
+    if (recommendations.skiLength < 100) recommendations.skiLength = 100;
+    if (recommendations.skiLength > 200) recommendations.skiLength = 200;
+    
+    return recommendations;
+}
+
 // Función para calcular DIN (lógica real)
 function calculateDIN(heightInCm, weightInKg, soleLength, age, level) {
     // Validaciones iniciales
@@ -454,6 +656,9 @@ function calculateDIN(heightInCm, weightInKg, soleLength, age, level) {
             error: `❌ Error en PESO: El peso ingresado (${weightInKg.toFixed(1)} kg / ${weightInLbs.toFixed(1)} lbs) es demasiado bajo. El peso mínimo requerido es de 22 lbs (aproximadamente 10 kg). Por favor verifica el campo de PESO.` 
         };
     }
+    
+    // Validar valores extremos
+    const warnings = validateExtremeValues(heightInCm, weightInKg, age);
     
     // Convertir edad a número (aproximado para el cálculo)
     let ageValue;
@@ -626,7 +831,7 @@ function showResults(data) {
     if (data.age === 'under10') ageText = '≤9';
     else if (data.age === '10-49') ageText = '10 - 49';
     else if (data.age === 'over50') ageText = '50 +';
-    else ageText = data.age;
+    else ageText = data.age || '10 - 49';
     document.getElementById('resultAge').textContent = ageText;
     
     document.getElementById('resultLevel').textContent = `TYPE ${data.level}`;
@@ -636,6 +841,39 @@ function showResults(data) {
         document.getElementById('dinValue').textContent = `${data.din.toFixed(1)} (${data.skierCode}${data.column})`;
     } else {
         document.getElementById('dinValue').textContent = data.din.toFixed(1);
+    }
+    
+    // Mostrar recomendaciones de equipo
+    if (data.recommendations) {
+        const recSection = document.getElementById('recommendationsSection');
+        if (recSection && data.recommendations.poleLength && data.recommendations.skiLength) {
+            document.getElementById('resultPoleLength').textContent = `${data.recommendations.poleLength} cm`;
+            document.getElementById('resultSkiLength').textContent = `${data.recommendations.skiLength} cm`;
+            
+            const notesDiv = document.getElementById('recommendationNotes');
+            if (notesDiv && data.recommendations.notes && data.recommendations.notes.length > 0) {
+                notesDiv.innerHTML = data.recommendations.notes.map(note => `• ${note}`).join('<br>');
+            }
+            
+            recSection.style.display = 'block';
+        }
+    }
+    
+    // Actualizar traducciones en las secciones de recomendaciones y warnings
+    updateTranslations();
+    
+    // Mostrar alertas y advertencias
+    if (data.warnings && data.warnings.length > 0) {
+        const warningsSection = document.getElementById('warningsSection');
+        const warningsList = document.getElementById('warningsList');
+        
+        if (warningsSection && warningsList) {
+            warningsList.innerHTML = data.warnings.map(w => `• ${w.message}`).join('<br>');
+            warningsSection.style.display = 'block';
+        }
+    } else {
+        const warningsSection = document.getElementById('warningsSection');
+        if (warningsSection) warningsSection.style.display = 'none';
     }
     
     // Mostrar modal
@@ -866,7 +1104,15 @@ function setupAgeOptions() {
         option.addEventListener('click', function() {
             options.forEach(opt => opt.classList.remove('active'));
             this.classList.add('active');
-            appState.selectedAge = this.getAttribute('data-age');
+            const selectedAge = this.getAttribute('data-age');
+            appState.selectedAge = selectedAge;
+            
+            // Mostrar alerta para edades extremas
+            if (selectedAge === 'under10') {
+                alert('⚠️ Edad ≤9 años: Se recomienda supervisión profesional para el ajuste del equipo de esquí. El cálculo DIN puede requerir ajustes adicionales.');
+            } else if (selectedAge === 'over50') {
+                alert('⚠️ Edad 50+: Se recomienda consultar con un técnico especializado para ajustes adicionales de seguridad y comodidad.');
+            }
         });
     });
 }
