@@ -457,7 +457,9 @@ function calculateDIN(heightInCm, weightInKg, soleLength, age, level) {
     
     // Convertir edad a número (aproximado para el cálculo)
     let ageValue;
-    if (age === '10-49') {
+    if (age === 'under10') {
+        ageValue = 5; // Valor medio para rango 0-9
+    } else if (age === '10-49') {
         ageValue = 25; // Valor medio para rango 10-49
     } else if (age === 'over50') {
         ageValue = 50;
@@ -621,7 +623,8 @@ function showResults(data) {
     
     // Traducir edad
     let ageText = '';
-    if (data.age === '10-49') ageText = '10 - 49';
+    if (data.age === 'under10') ageText = '≤9';
+    else if (data.age === '10-49') ageText = '10 - 49';
     else if (data.age === 'over50') ageText = '50 +';
     else ageText = data.age;
     document.getElementById('resultAge').textContent = ageText;
@@ -642,44 +645,32 @@ function showResults(data) {
     updateTranslations();
 }
 
-// Formatear altura imperial (ft'in")
+// Formatear altura imperial (ft'in") con restricciones
 function formatHeightFtIn(value) {
-    // Remover todos los caracteres no numéricos excepto el apóstrofe y comillas
-    let cleaned = value.replace(/[^\d'"]/g, '');
-    
-    // Si tiene apóstrofe, separar pies y pulgadas
-    if (cleaned.includes("'")) {
-        const parts = cleaned.split("'");
-        const feet = parts[0] || '';
-        let inches = (parts[1] || '').replace(/"/g, '');
-        
-        // Limitar pies a 1-2 dígitos y pulgadas a 2 dígitos
-        const feetLimited = feet.slice(0, 2);
-        const inchesLimited = inches.slice(0, 2);
-        
-        if (feetLimited && inchesLimited) {
-            return `${feetLimited}'${inchesLimited}"`;
-        } else if (feetLimited) {
-            return `${feetLimited}'`;
-        }
-        return cleaned;
+    let digits = value.replace(/\D/g, '');
+    if (digits.length === 0) return '';
+
+    /* ----- First block (2–8) ----- */
+    const rawFirst = parseInt(digits[0], 10);
+    const first = clamp(Number.isNaN(rawFirst) ? 2 : rawFirst, 2, 8);
+
+    const restRaw = digits.substring(1); // second block digits
+
+    // If second block hasn't started yet
+    if (restRaw.length === 0) {
+        return first + "'";
     }
-    
-    // Si no tiene apóstrofe, formatear según la longitud
-    if (cleaned.length === 0) return '';
-    if (cleaned.length === 1) return cleaned; // Solo un dígito (pies)
-    if (cleaned.length === 2) {
-        // 2 dígitos: pies y primer dígito de pulgadas (ej: "51" = 5'1)
-        return `${cleaned[0]}'${cleaned[1]}`;
-    }
-    if (cleaned.length >= 3) {
-        // 3+ dígitos: últimos dos son pulgadas (ej: "510" = 5'10")
-        const feet = cleaned.slice(0, -2);
-        const inches = cleaned.slice(-2);
-        return `${feet}'${inches}"`;
-    }
-    
-    return cleaned;
+
+    /* ----- Second block (0–11) ----- */
+    const num = parseInt(restRaw, 10);
+    const second = clamp(Number.isNaN(num) ? 0 : num, 0, 11);
+
+    return first + "'" + second + '"';
+}
+
+// Función auxiliar para limitar un número entre min y max
+function clamp(n, min, max) {
+    return Math.min(max, Math.max(min, n));
 }
 
 // Parsear altura imperial (ft'in") a pies y pulgadas
@@ -790,41 +781,36 @@ function setupHeightInputs() {
     
     if (!heightFtInInput) return;
     
-    // Formatear mientras el usuario escribe
-    heightFtInInput.addEventListener('input', (e) => {
-        const value = e.target.value;
-        const cursorPos = e.target.selectionStart;
-        const formatted = formatHeightFtIn(value);
-        
-        // Actualizar el valor
-        e.target.value = formatted;
-        
-        // Ajustar posición del cursor de manera inteligente
-        let newCursorPos = cursorPos;
-        const lengthDiff = formatted.length - value.length;
-        
-        if (lengthDiff > 0) {
-            // Se agregaron caracteres (apóstrofe o comillas)
-            newCursorPos = cursorPos + lengthDiff;
-        } else if (lengthDiff < 0) {
-            // Se eliminaron caracteres
-            newCursorPos = Math.max(0, cursorPos + lengthDiff);
+    // Backspace handling para evitar que separadores se queden atascados
+    heightFtInInput.addEventListener('keydown', function (e) {
+        if (e.key !== 'Backspace') return;
+
+        const v = heightFtInInput.value;
+        const atEnd =
+            heightFtInInput.selectionStart === heightFtInInput.selectionEnd &&
+            heightFtInInput.selectionEnd === v.length;
+
+        if (atEnd && (v.endsWith("'") || v.endsWith('"'))) {
+            e.preventDefault();
+
+            let digits = v.replace(/\D/g, '');
+            digits = digits.slice(0, -1);
+
+            heightFtInInput.value = formatHeightFtIn(digits);
+            heightFtInInput.setSelectionRange(heightFtInInput.value.length, heightFtInInput.value.length);
         }
-        
-        // Asegurar que el cursor no esté en una posición inválida
-        newCursorPos = Math.min(newCursorPos, formatted.length);
-        
-        // Usar setTimeout para asegurar que el DOM se actualice
-        setTimeout(() => {
-            e.target.setSelectionRange(newCursorPos, newCursorPos);
-        }, 0);
     });
     
-    // Permitir solo números y apóstrofe en el teclado
+    // Reformatear en cada cambio de input
+    heightFtInInput.addEventListener('input', function () {
+        heightFtInInput.value = formatHeightFtIn(heightFtInInput.value);
+    });
+    
+    // Permitir solo números en el teclado
     heightFtInInput.addEventListener('keypress', (e) => {
         const char = String.fromCharCode(e.which || e.keyCode);
-        // Permitir números, apóstrofe (') y comillas (")
-        if (!/[0-9'"]/.test(char) && !e.ctrlKey && !e.metaKey) {
+        // Permitir solo números
+        if (!/[0-9]/.test(char) && !e.ctrlKey && !e.metaKey) {
             e.preventDefault();
         }
     });

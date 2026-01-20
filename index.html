@@ -52,6 +52,26 @@
         <form id="skiRentalForm">
             <!-- Inputs Principales -->
             <div class="input-group-custom">
+                <label class="form-label" for="weight" data-i18n="weight">Weight</label>
+                <div class="input-group">
+                    <input 
+                        type="number" 
+                        class="form-control form-control-custom input-with-toggle" 
+                        id="weight" 
+                        data-i18n-placeholder="weightPlaceholder"
+                        placeholder="Enter your weight"
+                        step="0.1"
+                        inputmode="decimal"
+                        maxlength="3"
+                        required
+                    >
+                    <button type="button" class="input-group-text input-group-text-custom toggle-btn" id="weightToggle">
+                        <span id="weightUnit">LBS</span> <span class="separator">|</span> <span class="inactive">KG</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="input-group-custom">
                 <label class="form-label" data-i18n="height">Height</label>
                 <!-- Sistema americano (ft/in) -->
                 <div class="input-group height-input-group-ftin" id="heightInputGroupFtIn">
@@ -62,7 +82,7 @@
                         placeholder="5'10&quot;"
                         inputmode="numeric"
                         maxlength="5"
-                        pattern="[0-9']*"
+                        name="height"
                     >
                     <button type="button" class="input-group-text input-group-text-custom toggle-btn" id="heightToggle">
                         <span id="heightUnit">FT/IN</span> <span class="separator">|</span> <span class="inactive">CM</span>
@@ -81,26 +101,6 @@
                     >
                     <button type="button" class="input-group-text input-group-text-custom toggle-btn" id="heightToggleCm">
                         <span id="heightUnitCm">CM</span> <span class="separator">|</span> <span class="inactive">FT/IN</span>
-                    </button>
-                </div>
-            </div>
-            
-            <div class="input-group-custom">
-                <label class="form-label" for="weight" data-i18n="weight">Weight</label>
-                <div class="input-group">
-                    <input 
-                        type="number" 
-                        class="form-control form-control-custom input-with-toggle" 
-                        id="weight" 
-                        data-i18n-placeholder="weightPlaceholder"
-                        placeholder="Enter your weight"
-                        step="0.1"
-                        inputmode="decimal"
-                        maxlength="3"
-                        required
-                    >
-                    <button type="button" class="input-group-text input-group-text-custom toggle-btn" id="weightToggle">
-                        <span id="weightUnit">LBS</span> <span class="separator">|</span> <span class="inactive">KG</span>
                     </button>
                 </div>
             </div>
@@ -142,6 +142,9 @@
                     <div class="input-group-custom">
                         <label class="form-label" data-i18n="age">Age</label>
                         <div class="age-options">
+                            <button type="button" class="age-option" data-age="under10">
+                                ≤9
+                            </button>
                             <button type="button" class="age-option active" data-age="10-49">
                                 10 - 49
                             </button>
@@ -196,6 +199,9 @@
                 </p>
                 <p data-i18n="aboutText2">
                     We use advanced algorithms and cutting-edge technology to calculate the optimal DIN setting and recommend the ideal ski equipment for each user.
+                </p>
+                <p style="margin-top: 16px; font-style: italic; color: var(--text-secondary);">
+                    <strong>Official Rossignol teaching guide</strong>
                 </p>
                 <div class="developers-section">
                     <h3 data-i18n="developers">Developers</h3>
