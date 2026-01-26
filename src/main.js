@@ -1761,6 +1761,16 @@ async function setupCameraMeasurement() {
             // Dibujar video en canvas
             ctx.drawImage(cameraVideo, 0, 0, cameraCanvas.width, cameraCanvas.height);
             
+            // Detener la cámara inmediatamente después de capturar
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            if (cameraVideo) {
+                cameraVideo.srcObject = null;
+                cameraVideo.hidden = true;
+            }
+            
             // Preprocesar imagen para mejorar OCR
             const imageData = ctx.getImageData(0, 0, cameraCanvas.width, cameraCanvas.height);
             const processedData = preprocessImageForOCR(imageData);
@@ -1857,14 +1867,14 @@ async function setupCameraMeasurement() {
                 
                 if (!hasData) {
                     // No se encontró ningún dato
-                    resultHTML = '<p style="color: #ffa500; margin-bottom: 16px;">' + translate('ocrNoDataFound') + '</p>';
-                    resultHTML += '<button type="button" class="btn btn-secondary-custom" id="enterManuallyBtn" style="width: 100%;">' + translate('enterManually') + '</button>';
+                    resultHTML = '<p style="color: #ffa500; margin-bottom: 16px; font-size: 0.9rem;">' + translate('ocrNoDataFound') + '</p>';
+                    resultHTML += '<button type="button" class="btn btn-secondary-custom ocr-action-btn" id="enterManuallyBtn" style="width: 100%; padding: 12px; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">' + translate('enterManually') + '</button>';
                 } else {
                     // Hay algunos datos, mostrar botón para usar y otro para ingresar manualmente lo que falta
-                    resultHTML += '<div style="display: flex; gap: 8px; flex-wrap: wrap;">';
-                    resultHTML += '<button type="button" class="btn btn-primary-custom" id="useOCRDataBtn" style="flex: 1;">' + translate('useRecognizedData') + '</button>';
+                    resultHTML += '<div style="display: flex; gap: 8px; flex-direction: column;">';
+                    resultHTML += '<button type="button" class="btn btn-primary-custom ocr-action-btn" id="useOCRDataBtn" style="width: 100%; padding: 12px; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">' + translate('useRecognizedData') + '</button>';
                     if (missingFields.length > 0) {
-                        resultHTML += '<button type="button" class="btn btn-secondary-custom" id="enterManuallyBtn" style="flex: 1;">' + translate('enterManually') + '</button>';
+                        resultHTML += '<button type="button" class="btn btn-secondary-custom ocr-action-btn" id="enterManuallyBtn" style="width: 100%; padding: 12px; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">' + translate('enterManually') + '</button>';
                     }
                     resultHTML += '</div>';
                 }
