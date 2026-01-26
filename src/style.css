@@ -411,8 +411,15 @@ body {
 }
 
 /* Primary Button */
-.btn-primary-custom {
+/* Contenedor de botones */
+.buttons-container {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
     width: 100%;
+}
+
+.btn-primary-custom {
     height: 52px;
     background: rgba(255, 255, 255, 1);
     background-image: none;
@@ -421,7 +428,6 @@ body {
     font-size: 0.95rem;
     font-weight: 600;
     color: var(--bg-primary);
-    margin-top: 24px;
     transition: all 0.3s ease;
     box-shadow: 0 4px 20px var(--glow-cyan);
     letter-spacing: 1.5px;
@@ -430,6 +436,24 @@ body {
     cursor: pointer;
     position: relative;
     backdrop-filter: blur(10px);
+}
+
+/* Botón Calculate DIN - 80% del ancho */
+.calculate-btn {
+    flex: 0 0 80%;
+    width: 80%;
+}
+
+/* Botón Cámara - 20% del ancho */
+.camera-btn {
+    flex: 0 0 20%;
+    width: 20%;
+    min-width: 60px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1;
 }
 
 .btn-primary-custom:hover {
@@ -487,6 +511,30 @@ body {
         margin-bottom: 16px;
     }
     
+    .buttons-container {
+        margin-top: 16px;
+        gap: 8px;
+    }
+    
+    .btn-primary-custom {
+        padding: 12px 20px;
+        font-size: 0.85rem;
+    }
+    
+    .calculate-btn {
+        flex: 0 0 80%;
+    }
+    
+    .camera-btn {
+        flex: 0 0 20%;
+        min-width: 50px;
+    }
+    
+    .camera-btn svg {
+        width: 18px;
+        height: 18px;
+    }
+    
     .age-option {
         min-width: 100%;
         padding: 10px 14px;
@@ -501,10 +549,28 @@ body {
         width: 100%;
     }
     
-    .btn-primary-custom {
+    .buttons-container {
         margin-top: 16px;
+        gap: 8px;
+    }
+    
+    .btn-primary-custom {
         padding: 12px 20px;
         font-size: 0.85rem;
+    }
+    
+    .calculate-btn {
+        flex: 0 0 80%;
+    }
+    
+    .camera-btn {
+        flex: 0 0 20%;
+        min-width: 50px;
+    }
+    
+    .camera-btn svg {
+        width: 18px;
+        height: 18px;
     }
     
     .app-footer {
@@ -1012,5 +1078,317 @@ body {
     .view-measures-btn {
         font-size: 0.8rem;
         padding: 8px 12px;
+    }
+}
+
+/* ===== CÁMARA FULLSCREEN INTERFACE ===== */
+.camera-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    z-index: 3000;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.camera-modal-overlay.show {
+    display: flex;
+}
+
+/* Botón de volver en esquina superior derecha */
+.camera-back-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 48px;
+    height: 48px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3001;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.camera-back-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: scale(1.1);
+}
+
+.camera-back-btn svg {
+    width: 24px;
+    height: 24px;
+}
+
+/* Contenedor del video */
+.camera-video-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+    overflow: hidden;
+}
+
+.camera-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Overlay de instrucciones iniciales */
+.camera-instructions-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3002;
+    backdrop-filter: blur(10px);
+}
+
+.camera-instructions-content {
+    text-align: center;
+    padding: 40px;
+    max-width: 500px;
+    color: #fff;
+}
+
+.camera-start-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    color: #fff;
+    padding: 16px 32px;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    margin-top: 24px;
+    backdrop-filter: blur(10px);
+}
+
+.camera-start-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.6);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(255, 255, 255, 0.2);
+}
+
+/* Controles de cámara */
+.camera-controls {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 40px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.4) 50%, transparent 100%);
+    z-index: 3003;
+}
+
+/* Botón de flash */
+.camera-flash-btn {
+    width: 56px;
+    height: 56px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.camera-flash-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: scale(1.1);
+}
+
+.camera-flash-btn.active {
+    background: rgba(255, 255, 255, 0.4);
+    border-color: rgba(255, 255, 255, 0.6);
+}
+
+/* Botón de captura grande */
+.camera-capture-btn {
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.3);
+    border: 4px solid rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    position: relative;
+    backdrop-filter: blur(10px);
+}
+
+.camera-capture-inner {
+    width: 64px;
+    height: 64px;
+    background: #fff;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.camera-capture-btn:active {
+    transform: scale(0.9);
+}
+
+.camera-capture-btn:active .camera-capture-inner {
+    transform: scale(0.85);
+}
+
+.camera-capture-btn:hover {
+    border-color: rgba(255, 255, 255, 0.8);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+}
+
+/* Botón de cambiar cámara */
+.camera-switch-btn {
+    width: 56px;
+    height: 56px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.camera-switch-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: scale(1.1);
+}
+
+/* Panel de resultados */
+.camera-result-panel {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(30, 41, 59, 0.95);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 24px;
+    max-height: 50vh;
+    overflow-y: auto;
+    z-index: 3004;
+    backdrop-filter: blur(20px);
+    border-radius: 24px 0 0 0;
+    animation: slideUp 0.3s ease-out;
+}
+
+/* Indicador de procesamiento */
+.camera-processing {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 3005;
+    backdrop-filter: blur(10px);
+}
+
+.camera-processing-spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid rgba(255, 255, 255, 0.2);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.camera-processing p {
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+/* Responsive para móviles */
+@media (max-width: 768px) {
+    .camera-back-btn {
+        top: 12px;
+        right: 12px;
+        width: 40px;
+        height: 40px;
+    }
+    
+    .camera-back-btn svg {
+        width: 20px;
+        height: 20px;
+    }
+    
+    .camera-controls {
+        padding: 30px 16px;
+    }
+    
+    .camera-capture-btn {
+        width: 70px;
+        height: 70px;
+    }
+    
+    .camera-capture-inner {
+        width: 56px;
+        height: 56px;
+    }
+    
+    .camera-flash-btn,
+    .camera-switch-btn {
+        width: 48px;
+        height: 48px;
+    }
+    
+    .camera-instructions-content {
+        padding: 24px;
+    }
+    
+    .camera-result-panel {
+        padding: 20px;
+        max-height: 60vh;
     }
 }

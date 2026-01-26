@@ -176,15 +176,17 @@
             
             <!-- Footer CTA -->
             <div style="display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap;">
-                <button type="submit" class="btn btn-primary-custom" id="calculateBtn" data-i18n="calculateBtn">
-                    CALCULATE DIN
-                </button>
-                <button type="button" class="btn btn-primary-custom" id="cameraMeasureBtn" style="display: none; min-width: 60px; padding: 12px; aspect-ratio: 1;" title="Measure with Camera">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M23 19C23 19.5304 22.7893 20.0391 22.4142 20.4142C22.0391 20.7893 21.5304 21 21 21H3C2.46957 21 1.96086 20.7893 1.58579 20.4142C1.21071 20.0391 1 19.5304 1 19V8C1 7.46957 1.21071 6.96086 1.58579 6.58579C1.96086 6.21071 2.46957 6 3 6H7L9 4H15L17 6H21C21.5304 6 22.0391 6.21071 22.4142 6.58579C22.7893 6.96086 23 7.46957 23 8V19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <circle cx="12" cy="13" r="4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </button>
+                <div class="buttons-container">
+                    <button type="submit" class="btn btn-primary-custom calculate-btn" id="calculateBtn" data-i18n="calculateBtn">
+                        CALCULATE DIN
+                    </button>
+                    <button type="button" class="btn btn-primary-custom camera-btn" id="cameraMeasureBtn" style="display: none;" title="Measure with Camera">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M23 19C23 19.5304 22.7893 20.0391 22.4142 20.4142C22.0391 20.7893 21.5304 21 21 21H3C2.46957 21 1.96086 20.7893 1.58579 20.4142C1.21071 20.0391 1 19.5304 1 19V8C1 7.46957 1.21071 6.96086 1.58579 6.58579C1.96086 6.21071 2.46957 6 3 6H7L9 4H15L17 6H21C21.5304 6 22.0391 6.21071 22.4142 6.58579C22.7893 6.96086 23 7.46957 23 8V19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <circle cx="12" cy="13" r="4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
         </form>
         
@@ -218,7 +220,7 @@
                             <i class="fas fa-code"></i>
                             <span>Benjamín Méndez</span>
                             <div class="developer-links">
-                                <a href="https://www.instagram.com/benjaminm_0/" target="_blank" rel="noopener noreferrer" class="social-link" title="Instagram">
+                                <a href="https://www.instagram.com/bemendezc/" target="_blank" rel="noopener noreferrer" class="social-link" title="Instagram">
                                     <i class="fab fa-instagram"></i>
                                 </a>
                                 <a href="https://www.linkedin.com/in/benjamin-mendez-09427a2a4/" target="_blank" rel="noopener noreferrer" class="social-link" title="LinkedIn">
@@ -230,7 +232,7 @@
                             <i class="fas fa-code"></i>
                             <span>Claudio Díaz</span>
                             <div class="developer-links">
-                                <a href="https://www.instagram.com/bemendezc/" target="_blank" rel="noopener noreferrer" class="social-link" title="Instagram">
+                                <a href="https://www.instagram.com/cldiazc/" target="_blank" rel="noopener noreferrer" class="social-link" title="Instagram">
                                     <i class="fab fa-instagram"></i>
                                 </a>
                                 <a href="https://www.linkedin.com/in/claudio-ismael-diaz-consuegra-9083b8258" target="_blank" rel="noopener noreferrer" class="social-link" title="LinkedIn">
@@ -322,43 +324,71 @@
     </div>
 
     <!-- Modal Cámara de Medición -->
-    <div class="modal-overlay" id="cameraModal" style="display: none;">
-        <div class="modal-content" style="max-width: 90%; max-height: 90vh;">
-            <button type="button" class="modal-close" id="closeCameraModal">
-                <i class="fas fa-times"></i>
-            </button>
-            <h2 class="modal-title" data-i18n="cameraModalTitle">Measure with Camera</h2>
-            <div class="modal-body">
-                <div style="text-align: center; margin-bottom: 20px;">
-                    <p style="color: var(--text-secondary); margin-bottom: 16px;" data-i18n="cameraInstructions">
-                        Place a reference object (like a credit card) next to the boot sole and capture a photo.
+    <div class="camera-modal-overlay" id="cameraModal" style="display: none;">
+        <!-- Botón de volver en esquina superior derecha -->
+        <button type="button" class="camera-back-btn" id="closeCameraModal">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </button>
+        
+        <!-- Video de cámara fullscreen -->
+        <div class="camera-video-container">
+            <video id="cameraVideo" autoplay playsinline class="camera-video" hidden></video>
+            <canvas id="cameraCanvas" style="display: none;"></canvas>
+            
+            <!-- Overlay de instrucciones (solo antes de iniciar cámara) -->
+            <div id="cameraInstructionsOverlay" class="camera-instructions-overlay">
+                <div class="camera-instructions-content">
+                    <p data-i18n="cameraInstructions" style="margin-bottom: 16px; font-size: 1rem;">
+                        Capture a photo of a document containing person information (age, weight, height, boot sole length, type/level). The system will try to recognize the data automatically.
                     </p>
-                    <video id="cameraVideo" autoplay playsinline style="width: 100%; max-width: 500px; border-radius: 8px; background: #000;" hidden></video>
-                    <canvas id="cameraCanvas" style="display: none;"></canvas>
-                    <div id="cameraInstructions" style="padding: 20px; background: rgba(51, 65, 85, 0.3); border-radius: 8px; margin-top: 16px;">
-                        <p style="font-size: 0.9rem; line-height: 1.6;">
-                            <span data-i18n="cameraHowTo">📸 How to measure:</span><br>
-                            <span data-i18n="cameraStep1">1. Place a credit card (85.6mm wide) or ruler next to the boot sole</span><br>
-                            <span data-i18n="cameraStep2">2. Position the camera directly above</span><br>
-                            <span data-i18n="cameraStep3">3. Tap to capture and analyze</span>
-                        </p>
-                    </div>
-                </div>
-                <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-                    <button type="button" class="btn btn-secondary-custom" id="startCameraBtn" data-i18n="startCamera">
-                        <i class="fas fa-camera"></i> Start Camera
+                    <button type="button" class="camera-start-btn" id="startCameraBtn" data-i18n="startCamera">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 8px;">
+                            <path d="M23 19C23 19.5304 22.7893 20.0391 22.4142 20.4142C22.0391 20.7893 21.5304 21 21 21H3C2.46957 21 1.96086 20.7893 1.58579 20.4142C1.21071 20.0391 1 19.5304 1 19V8C1 7.46957 1.21071 6.96086 1.58579 6.58579C1.96086 6.21071 2.46957 6 3 6H7L9 4H15L17 6H21C21.5304 6 22.0391 6.21071 22.4142 6.58579C22.7893 6.96086 23 7.46957 23 8V19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <circle cx="12" cy="13" r="4" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                        Start Camera
                     </button>
-                    <button type="button" class="btn btn-secondary-custom" id="capturePhotoBtn" style="display: none;" data-i18n="capturePhoto">
-                        <i class="fas fa-camera-retro"></i> Capture
-                    </button>
-                    <button type="button" class="btn btn-secondary-custom" id="stopCameraBtn" style="display: none;" data-i18n="stopCamera">
-                        <i class="fas fa-stop"></i> Stop
-                    </button>
-                </div>
-                <div id="cameraResult" style="margin-top: 20px; padding: 16px; background: rgba(51, 65, 85, 0.3); border-radius: 8px; display: none;">
-                    <!-- Los resultados de OCR se insertarán aquí dinámicamente -->
                 </div>
             </div>
+            
+            <!-- Controles de cámara (aparecen cuando la cámara está activa) -->
+            <div id="cameraControls" class="camera-controls" style="display: none;">
+                <!-- Botón de flash -->
+                <button type="button" class="camera-flash-btn" id="toggleFlashBtn" title="Toggle Flash">
+                    <svg id="flashOnIcon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none;">
+                        <path d="M13 2L4 14H12L11 22L20 10H12L13 2Z" fill="currentColor"/>
+                    </svg>
+                    <svg id="flashOffIcon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M13 2L4 14H12L11 22L20 10H12L13 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    </svg>
+                </button>
+                
+                <!-- Botón de captura grande -->
+                <button type="button" class="camera-capture-btn" id="capturePhotoBtn">
+                    <span class="camera-capture-inner"></span>
+                </button>
+                
+                <!-- Botón de cambiar cámara (opcional) -->
+                <button type="button" class="camera-switch-btn" id="switchCameraBtn" title="Switch Camera" style="display: none;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M23 19C23 19.5304 22.7893 20.0391 22.4142 20.4142C22.0391 20.7893 21.5304 21 21 21H3C2.46957 21 1.96086 20.7893 1.58579 20.4142C1.21071 20.0391 1 19.5304 1 19V8C1 7.46957 1.21071 6.96086 1.58579 6.58579C1.96086 6.21071 2.46957 6 3 6H7L9 4H15L17 6H21C21.5304 6 22.0391 6.21071 22.4142 6.58579C22.7893 6.96086 23 7.46957 23 8V19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M12 13C12.5523 13 13 12.5523 13 12C13 11.4477 12.5523 11 12 11C11.4477 11 11 11.4477 11 12C11 12.5523 11.4477 13 12 13Z" fill="currentColor"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Panel de resultados OCR (aparece después de capturar) -->
+        <div id="cameraResult" class="camera-result-panel" style="display: none;">
+            <!-- Los resultados de OCR se insertarán aquí dinámicamente -->
+        </div>
+        
+        <!-- Indicador de procesamiento -->
+        <div id="ocrProcessing" class="camera-processing" style="display: none;">
+            <div class="camera-processing-spinner"></div>
+            <p id="ocrStatus" data-i18n="ocrProcessing">Processing image...</p>
         </div>
     </div>
     

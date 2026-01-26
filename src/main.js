@@ -1315,26 +1315,38 @@ function extractDataFromText(text) {
     // Extraer edad: buscar patrones más flexibles para escritura manual
     // Tolerancia a variaciones: "edad", "edod", "edad:", "edad=", "25 años", "25 anos", etc.
     const agePatterns = [
-        /(?:edad|edod|age|a[ñn]os?|years?)[\s:=]+(\d{1,3})/i,
-        /(\d{1,3})[\s]*(?:a[ñn]os?|years?)/i,
-        /(?:nacido|born|nacio)[\s:=]+(\d{4})/i, // Para calcular edad desde año de nacimiento
-        /(?:a[ñn]o|year)[\s:=]+(\d{4})/i // Año de nacimiento alternativo
+        /(?:edad|edod|age|a[ñn]os?|years?|anos?)[\s:=]+(\d{1,3})/i,
+        /(\d{1,3})[\s]*(?:a[ñn]os?|years?|anos?)/i,
+        /(?:nacido|born|nacio|nacimiento)[\s:=]+(\d{4})/i, // Para calcular edad desde año de nacimiento
+        /(?:a[ñn]o|year|ano)[\s:=]+(\d{4})/i, // Año de nacimiento alternativo
+        /\b(\d{1,2})\s*(?:a[ñn]os?|years?|anos?)\b/i, // Patrón más simple: "25 años"
+        /\b(?:edad|age)[\s:]*(\d{1,3})\b/i // "edad: 25" o "age 25"
     ];
     
-    for (const pattern of agePatterns) {
-        const match = normalizedText.match(pattern) || text.match(pattern);
-        if (match) {
-            let age = parseInt(match[1].replace(/[^0-9]/g, '')); // Limpiar caracteres no numéricos
-            // Si es un año de nacimiento (4 dígitos y > 1900)
-            if (age > 1900 && age < 2100) {
-                const currentYear = new Date().getFullYear();
-                age = currentYear - age;
-            }
-            if (age >= 0 && age <= 120) {
-                extracted.age = age;
-                break;
+    // Buscar en texto original y normalizado
+    const searchTexts = [text, normalizedText];
+    
+    for (const searchText of searchTexts) {
+        for (const pattern of agePatterns) {
+            const match = searchText.match(pattern);
+            if (match) {
+                let ageStr = match[1].replace(/[^0-9]/g, ''); // Limpiar caracteres no numéricos
+                let age = parseInt(ageStr);
+                
+                // Si es un año de nacimiento (4 dígitos y > 1900)
+                if (age > 1900 && age < 2100) {
+                    const currentYear = new Date().getFullYear();
+                    age = currentYear - age;
+                }
+                
+                if (age >= 0 && age <= 120) {
+                    extracted.age = age;
+                    console.log('Edad encontrada:', age, 'con patrón:', pattern);
+                    break;
+                }
             }
         }
+        if (extracted.age !== null) break;
     }
     
     // Extraer peso: buscar patrones más flexibles para escritura manual
@@ -1507,6 +1519,47 @@ function extractDataFromText(text) {
     return extracted;
 }
 
+// Función para preprocesar imagen y mejorar reconocimiento OCR
+function preprocessImageForOCR(imageData) {
+    const data = imageData.data;
+    const width = imageData.width;
+    const height = imageData.height;
+    
+    // Crear nueva imagen procesada
+    const processedData = new ImageData(width, height);
+    const processed = processedData.data;
+    
+    // Aplicar mejoras: contraste, brillo y binarización
+    for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        const a = data[i + 3];
+        
+        // Convertir a escala de grises
+        const gray = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
+        
+        // Aumentar contraste (ajustar según necesidad)
+        let contrast = ((gray - 128) * 1.5) + 128;
+        contrast = Math.max(0, Math.min(255, contrast));
+        
+        // Ajustar brillo
+        let brightness = contrast + 20;
+        brightness = Math.max(0, Math.min(255, brightness));
+        
+        // Binarización adaptativa (umbral)
+        const threshold = 128;
+        const binary = brightness > threshold ? 255 : 0;
+        
+        processed[i] = binary;     // R
+        processed[i + 1] = binary; // G
+        processed[i + 2] = binary; // B
+        processed[i + 3] = a;     // Alpha
+    }
+    
+    return processedData;
+}
+
 // Configurar cámara para medición con OCR
 async function setupCameraMeasurement() {
     const cameraBtn = document.getElementById('cameraMeasureBtn');
@@ -1514,15 +1567,20 @@ async function setupCameraMeasurement() {
     const closeCameraBtn = document.getElementById('closeCameraModal');
     const startCameraBtn = document.getElementById('startCameraBtn');
     const captureBtn = document.getElementById('capturePhotoBtn');
-    const stopCameraBtn = document.getElementById('stopCameraBtn');
     const cameraVideo = document.getElementById('cameraVideo');
     const cameraCanvas = document.getElementById('cameraCanvas');
     const ocrProcessing = document.getElementById('ocrProcessing');
     const ocrStatus = document.getElementById('ocrStatus');
     const cameraResult = document.getElementById('cameraResult');
+    const cameraInstructionsOverlay = document.getElementById('cameraInstructionsOverlay');
+    const cameraControls = document.getElementById('cameraControls');
+    const toggleFlashBtn = document.getElementById('toggleFlashBtn');
+    const switchCameraBtn = document.getElementById('switchCameraBtn');
     
     let stream = null;
     let ocrWorker = null;
+    let flashActive = false;
+    let currentFacingMode = 'environment'; // 'environment' o 'user'
     
     // Verificar si la cámara está disponible
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
@@ -1533,15 +1591,34 @@ async function setupCameraMeasurement() {
     async function initOCR() {
         if (!ocrWorker) {
             try {
+                if (ocrStatus) {
+                    ocrStatus.textContent = 'Initializing OCR...';
+                }
+                
                 ocrWorker = await createWorker('eng+spa+por', 1, {
                     logger: m => {
-                        if (ocrStatus && m.status === 'recognizing text') {
-                            ocrStatus.textContent = translate('ocrRecognizing');
+                        console.log('OCR Status:', m.status, m.progress);
+                        if (ocrStatus) {
+                            if (m.status === 'recognizing text') {
+                                ocrStatus.textContent = translate('ocrRecognizing') + ` (${Math.round(m.progress * 100)}%)`;
+                            } else if (m.status === 'loading tesseract core') {
+                                ocrStatus.textContent = 'Loading OCR engine...';
+                            } else if (m.status === 'initializing tesseract') {
+                                ocrStatus.textContent = 'Initializing OCR...';
+                            } else if (m.status === 'loading language traineddata') {
+                                ocrStatus.textContent = 'Loading language data...';
+                            }
                         }
                     }
                 });
+                
+                console.log('OCR Worker inicializado correctamente');
+                return true;
             } catch (error) {
                 console.error('Error initializing OCR:', error);
+                if (ocrStatus) {
+                    ocrStatus.textContent = 'Error initializing OCR. Please refresh the page.';
+                }
                 return false;
             }
         }
@@ -1552,10 +1629,17 @@ async function setupCameraMeasurement() {
     if (cameraBtn && cameraModal) {
         cameraBtn.addEventListener('click', async () => {
             cameraModal.style.display = 'flex';
-            // Inicializar OCR cuando se abre el modal
-            if (ocrProcessing) {
-                ocrProcessing.style.display = 'none';
+            cameraModal.classList.add('show');
+            // Resetear estado
+            if (cameraInstructionsOverlay) cameraInstructionsOverlay.style.display = 'flex';
+            if (cameraControls) cameraControls.style.display = 'none';
+            if (cameraResult) {
+                cameraResult.style.display = 'none';
+                cameraResult.innerHTML = '';
             }
+            if (ocrProcessing) ocrProcessing.style.display = 'none';
+            if (cameraVideo) cameraVideo.hidden = true;
+            // Inicializar OCR cuando se abre el modal
             await initOCR();
         });
     }
@@ -1565,16 +1649,7 @@ async function setupCameraMeasurement() {
         closeCameraBtn.addEventListener('click', () => {
             stopCamera();
             cameraModal.style.display = 'none';
-        });
-    }
-    
-    // Cerrar al hacer clic fuera
-    if (cameraModal) {
-        cameraModal.addEventListener('click', (e) => {
-            if (e.target === cameraModal) {
-                stopCamera();
-                cameraModal.style.display = 'none';
-            }
+            cameraModal.classList.remove('show');
         });
     }
     
@@ -1584,20 +1659,74 @@ async function setupCameraMeasurement() {
             try {
                 stream = await navigator.mediaDevices.getUserMedia({ 
                     video: { 
-                        facingMode: 'environment',
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
+                        facingMode: currentFacingMode,
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
                     } 
                 });
                 if (cameraVideo) {
                     cameraVideo.srcObject = stream;
                     cameraVideo.hidden = false;
                 }
-                if (startCameraBtn) startCameraBtn.style.display = 'none';
-                if (captureBtn) captureBtn.style.display = 'inline-block';
-                if (stopCameraBtn) stopCameraBtn.style.display = 'inline-block';
+                // Ocultar overlay de instrucciones y mostrar controles
+                if (cameraInstructionsOverlay) cameraInstructionsOverlay.style.display = 'none';
+                if (cameraControls) cameraControls.style.display = 'flex';
             } catch (error) {
                 alert('Error accessing camera: ' + error.message);
+            }
+        });
+    }
+    
+    // Toggle flash (simulado con brillo del video)
+    if (toggleFlashBtn) {
+        toggleFlashBtn.addEventListener('click', () => {
+            flashActive = !flashActive;
+            const flashOnIcon = document.getElementById('flashOnIcon');
+            const flashOffIcon = document.getElementById('flashOffIcon');
+            
+            if (flashActive) {
+                toggleFlashBtn.classList.add('active');
+                if (flashOnIcon) flashOnIcon.style.display = 'block';
+                if (flashOffIcon) flashOffIcon.style.display = 'none';
+                // Aplicar filtro de brillo al video (simulación de flash)
+                if (cameraVideo) {
+                    cameraVideo.style.filter = 'brightness(1.5)';
+                }
+            } else {
+                toggleFlashBtn.classList.remove('active');
+                if (flashOnIcon) flashOnIcon.style.display = 'none';
+                if (flashOffIcon) flashOffIcon.style.display = 'block';
+                if (cameraVideo) {
+                    cameraVideo.style.filter = 'brightness(1)';
+                }
+            }
+        });
+    }
+    
+    // Cambiar entre cámara frontal y trasera
+    if (switchCameraBtn) {
+        switchCameraBtn.addEventListener('click', async () => {
+            // Detener stream actual
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            
+            // Cambiar modo
+            currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
+            
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: currentFacingMode,
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    } 
+                });
+                if (cameraVideo) {
+                    cameraVideo.srcObject = stream;
+                }
+            } catch (error) {
+                alert('Error switching camera: ' + error.message);
             }
         });
     }
@@ -1613,26 +1742,64 @@ async function setupCameraMeasurement() {
                 }
             }
             
-            // Capturar imagen del video
-            cameraCanvas.width = cameraVideo.videoWidth;
-            cameraCanvas.height = cameraVideo.videoHeight;
+            // Capturar imagen del video con mejor calidad
+            const videoWidth = cameraVideo.videoWidth;
+            const videoHeight = cameraVideo.videoHeight;
+            
+            // Crear canvas con tamaño optimizado (máximo 1920px de ancho para mejor rendimiento)
+            const maxWidth = 1920;
+            const scale = videoWidth > maxWidth ? maxWidth / videoWidth : 1;
+            cameraCanvas.width = videoWidth * scale;
+            cameraCanvas.height = videoHeight * scale;
+            
             const ctx = cameraCanvas.getContext('2d');
-            ctx.drawImage(cameraVideo, 0, 0);
+            
+            // Aplicar mejoras de imagen antes de capturar
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            
+            // Dibujar video en canvas
+            ctx.drawImage(cameraVideo, 0, 0, cameraCanvas.width, cameraCanvas.height);
+            
+            // Preprocesar imagen para mejorar OCR
+            const imageData = ctx.getImageData(0, 0, cameraCanvas.width, cameraCanvas.height);
+            const processedData = preprocessImageForOCR(imageData);
+            ctx.putImageData(processedData, 0, 0);
             
             // Mostrar estado de procesamiento
             if (ocrProcessing) {
-                ocrProcessing.style.display = 'block';
+                ocrProcessing.style.display = 'flex';
             }
             if (ocrStatus) {
                 ocrStatus.textContent = translate('ocrProcessing');
             }
+            // Ocultar controles mientras procesa
+            if (cameraControls) {
+                cameraControls.style.display = 'none';
+            }
             
             try {
+                // Configurar OCR con mejor precisión
+                await ocrWorker.setParameters({
+                    tessedit_char_whitelist: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzÁÉÍÓÚáéíóúÑñ.,:;/-=()[]{}°\'"',
+                    tessedit_pageseg_mode: '6', // Asume un bloque uniforme de texto
+                });
+                
                 // Procesar imagen con OCR
-                const { data: { text } } = await ocrWorker.recognize(cameraCanvas);
+                const { data: { text, confidence } } = await ocrWorker.recognize(cameraCanvas);
+                
+                console.log('OCR Text reconocido:', text);
+                console.log('Confianza promedio:', confidence);
+                
+                // Si no hay texto o confianza muy baja, mostrar advertencia
+                if (!text || text.trim().length === 0) {
+                    throw new Error('No se pudo reconocer texto en la imagen. Por favor, asegúrate de que el documento esté bien iluminado y enfocado.');
+                }
                 
                 // Extraer datos del texto
                 const extracted = extractDataFromText(text);
+                
+                console.log('Datos extraídos:', extracted);
                 
                 // Ocultar estado de procesamiento
                 if (ocrProcessing) {
@@ -1780,6 +1947,7 @@ async function setupCameraMeasurement() {
                         
                         stopCamera();
                         cameraModal.style.display = 'none';
+                        cameraModal.classList.remove('show');
                     });
                 }
                 
@@ -1845,6 +2013,7 @@ async function setupCameraMeasurement() {
                         
                         stopCamera();
                         cameraModal.style.display = 'none';
+                        cameraModal.classList.remove('show');
                         
                         // Focus en el primer campo que falta
                         if (missingFields.includes('height')) {
@@ -1872,9 +2041,46 @@ async function setupCameraMeasurement() {
             } catch (error) {
                 console.error('OCR Error:', error);
                 if (ocrProcessing) ocrProcessing.style.display = 'none';
+                if (ocrStatus) {
+                    ocrStatus.textContent = 'Error: ' + error.message;
+                }
+                
+                // Mostrar mensaje de error al usuario
                 if (cameraResult) {
-                    cameraResult.innerHTML = '<p style="color: #ff6b6b;">Error processing image. Please try again or enter data manually.</p>';
+                    let errorHTML = '<div style="padding: 20px; text-align: center;">';
+                    errorHTML += '<p style="color: #ff6b6b; margin-bottom: 16px; font-size: 1.1rem;">' + error.message + '</p>';
+                    errorHTML += '<p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem;">';
+                    errorHTML += 'Tips para mejor reconocimiento:<br>';
+                    errorHTML += '• Asegúrate de tener buena iluminación<br>';
+                    errorHTML += '• Mantén el documento plano y enfocado<br>';
+                    errorHTML += '• Evita sombras y reflejos<br>';
+                    errorHTML += '• El texto debe estar claro y legible';
+                    errorHTML += '</p>';
+                    errorHTML += '<button type="button" class="btn btn-secondary-custom" id="tryAgainBtn" style="width: 100%;">Try Again</button>';
+                    errorHTML += '<button type="button" class="btn btn-primary-custom" id="enterManuallyBtn" style="width: 100%; margin-top: 12px;">' + translate('enterManually') + '</button>';
+                    errorHTML += '</div>';
+                    
+                    cameraResult.innerHTML = errorHTML;
                     cameraResult.style.display = 'block';
+                    
+                    // Manejar botón de reintentar
+                    const tryAgainBtn = document.getElementById('tryAgainBtn');
+                    if (tryAgainBtn) {
+                        tryAgainBtn.addEventListener('click', () => {
+                            cameraResult.style.display = 'none';
+                            if (cameraControls) cameraControls.style.display = 'flex';
+                        });
+                    }
+                    
+                    // Manejar botón de ingresar manualmente
+                    const enterManuallyBtn = document.getElementById('enterManuallyBtn');
+                    if (enterManuallyBtn) {
+                        enterManuallyBtn.addEventListener('click', () => {
+                            stopCamera();
+                            cameraModal.style.display = 'none';
+                            cameraModal.classList.remove('show');
+                        });
+                    }
                 }
             }
         });
