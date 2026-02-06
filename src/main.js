@@ -895,7 +895,7 @@ function showResults(data) {
     if (data.heightFeet !== undefined && data.heightInches !== undefined) {
         document.getElementById('resultHeight').textContent = `${data.heightFeet}'${data.heightInches}" (${data.height.toFixed(1)} cm)`;
     } else {
-        document.getElementById('resultHeight').textContent = `${data.height.toFixed(1)} cm`;
+    document.getElementById('resultHeight').textContent = `${data.height.toFixed(1)} cm`;
     }
     
     document.getElementById('resultWeight').textContent = `${data.weight.toFixed(1)} kg`;
@@ -915,7 +915,7 @@ function showResults(data) {
     if (data.skierCode) {
         document.getElementById('dinValue').textContent = `${data.din.toFixed(1)} (${data.skierCode}${data.column})`;
     } else {
-        document.getElementById('dinValue').textContent = data.din.toFixed(1);
+    document.getElementById('dinValue').textContent = data.din.toFixed(1);
     }
     
     // Mostrar recomendaciones de equipo
@@ -1046,7 +1046,7 @@ function setupHeightToggle() {
         }
         
         // Cambiar estado
-        appState.heightUnit = 'cm';
+            appState.heightUnit = 'cm';
         if (heightInputGroupFtIn) heightInputGroupFtIn.style.display = 'none';
         if (heightInputGroupCm) heightInputGroupCm.style.display = 'flex';
         
@@ -1229,10 +1229,10 @@ function setupFormSubmit() {
             
             // Validación para ft/in
             if (!heightFeet && !heightInches) {
-                alert(translate('validationError'));
-                return;
-            }
-            
+            alert(translate('validationError'));
+            return;
+        }
+        
             // Convertir altura ft+inch a cm
             heightInCm = converters.ftInToCm(heightFeet, heightInches);
         } else {
@@ -1577,20 +1577,331 @@ async function setupCameraMeasurement() {
     const toggleFlashBtn = document.getElementById('toggleFlashBtn');
     const switchCameraBtn = document.getElementById('switchCameraBtn');
     
+    console.log('Setup Camera Measurement - Elementos encontrados:', {
+        cameraBtn: !!cameraBtn,
+        cameraModal: !!cameraModal,
+        closeCameraBtn: !!closeCameraBtn,
+        startCameraBtn: !!startCameraBtn,
+        captureBtn: !!captureBtn
+    });
+    
     let stream = null;
     let ocrWorker = null;
     let flashActive = false;
     let currentFacingMode = 'environment'; // 'environment' o 'user'
+    let isProcessing = false; // Flag para evitar múltiples procesamientos
     
     // Verificar si la cámara está disponible
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        if (cameraBtn) cameraBtn.style.display = 'inline-block';
+        if (cameraBtn) {
+            cameraBtn.style.display = 'inline-block';
+            console.log('Botón de cámara mostrado');
+        } else {
+            console.warn('Botón de cámara no encontrado');
+        }
+    } else {
+        console.warn('Cámara no disponible en este navegador');
+    }
+    
+    // Detener cámara
+    function stopCamera() {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            stream = null;
+        }
+        if (cameraVideo) {
+            cameraVideo.srcObject = null;
+            cameraVideo.hidden = true;
+        }
+        if (startCameraBtn) startCameraBtn.style.display = 'inline-block';
+        if (captureBtn) captureBtn.style.display = 'none';
+        if (stopCameraBtn) stopCameraBtn.style.display = 'none';
+        if (cameraResult) {
+            cameraResult.style.display = 'none';
+            cameraResult.innerHTML = '';
+        }
+        if (ocrProcessing) ocrProcessing.style.display = 'none';
+        isProcessing = false;
+    }
+    
+    // Función para resetear el estado del modal a su estado inicial
+    function resetCameraModal() {
+        stopCamera();
+        if (cameraInstructionsOverlay) cameraInstructionsOverlay.style.display = 'flex';
+        if (cameraControls) cameraControls.style.display = 'none';
+        if (cameraResult) {
+            cameraResult.style.display = 'none';
+            cameraResult.innerHTML = '';
+        }
+        if (ocrProcessing) ocrProcessing.style.display = 'none';
+        if (cameraVideo) {
+            cameraVideo.hidden = true;
+            cameraVideo.style.filter = 'brightness(1)';
+        }
+        flashActive = false;
+        isProcessing = false;
+        if (closeCameraBtn) closeCameraBtn.style.display = 'flex';
+    }
+    
+    // Función para reiniciar la cámara (usado cuando se hace clic en "capturar de nuevo")
+    async function restartCamera() {
+        resetCameraModal();
+        try {
+            console.log('Reiniciando cámara...');
+            
+            // Verificar si estamos en HTTPS o localhost
+            const isSecureContext = window.isSecureContext || location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+            if (!isSecureContext) {
+                alert('⚠️ La cámara requiere HTTPS. Por favor, despliega la aplicación en Vercel o usa un servidor local con HTTPS.');
+                return;
+            }
+            
+            stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { 
+                    facingMode: currentFacingMode,
+                    width: { ideal: 1920 },
+                    height: { ideal: 1080 }
+                } 
+            });
+            
+            if (cameraVideo) {
+                cameraVideo.srcObject = stream;
+                cameraVideo.hidden = false;
+                // Esperar a que el video esté listo
+                await new Promise((resolve) => {
+                    if (cameraVideo.readyState >= 2) {
+                        resolve();
+                    } else {
+                        cameraVideo.addEventListener('loadedmetadata', resolve, { once: true });
+                    }
+                });
+            }
+            
+            if (cameraInstructionsOverlay) cameraInstructionsOverlay.style.display = 'none';
+            if (cameraControls) cameraControls.style.display = 'flex';
+        } catch (error) {
+            console.error('Error reiniciando cámara:', error);
+            let errorMessage = 'Error accediendo a la cámara: ';
+            
+            if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+                errorMessage = '⚠️ Permiso de cámara denegado. Por favor, permite el acceso a la cámara.';
+            } else if (error.name === 'NotFoundError') {
+                errorMessage = '⚠️ No se encontró ninguna cámara.';
+            } else {
+                errorMessage += error.message || error.name || 'Error desconocido';
+            }
+            
+            alert(errorMessage);
+        }
+    }
+    
+    // Función auxiliar para llenar el formulario con datos extraídos
+    function fillFormWithExtractedData(extracted) {
+        if (extracted.height !== null) {
+            if (appState.heightUnit === 'ft') {
+                const { feet, inches } = converters.cmToFtIn(extracted.height);
+                const heightFtInInput = document.getElementById('heightFtIn');
+                if (heightFtInInput) {
+                    heightFtInInput.value = `${feet}'${inches}"`;
+                }
+            } else {
+                const heightCmInput = document.getElementById('heightCm');
+                if (heightCmInput) {
+                    heightCmInput.value = extracted.height.toFixed(1);
+                }
+            }
+        }
+        
+        if (extracted.weight !== null) {
+            const weightInput = document.getElementById('weight');
+            if (weightInput) {
+                // Convertir a la unidad actual
+                if (appState.weightUnit === 'lbs') {
+                    weightInput.value = converters.kgToLbs(extracted.weight).toFixed(1);
+                } else {
+                    weightInput.value = extracted.weight.toFixed(1);
+                }
+            }
+        }
+        
+        if (extracted.age !== null) {
+            // Seleccionar rango de edad apropiado
+            const ageOptions = document.querySelectorAll('.age-option');
+            if (extracted.age <= 9) {
+                appState.selectedAge = 'under10';
+            } else if (extracted.age >= 50) {
+                appState.selectedAge = 'over50';
+            } else {
+                appState.selectedAge = '10-49';
+            }
+            
+            ageOptions.forEach(opt => {
+                opt.classList.remove('active');
+                if (opt.getAttribute('data-age') === appState.selectedAge) {
+                    opt.classList.add('active');
+                }
+            });
+        }
+        
+        if (extracted.soleLength !== null) {
+            // Llenar campo de largo de bota
+            const soleLengthInput = document.getElementById('soleLength');
+            if (soleLengthInput) {
+                soleLengthInput.value = extracted.soleLength;
+            }
+        }
+        
+        if (extracted.type !== null) {
+            // Seleccionar nivel de esquí
+            const skillLevelCards = document.querySelectorAll('.skill-level-card');
+            skillLevelCards.forEach(card => {
+                card.classList.remove('active');
+                if (card.getAttribute('data-level') === extracted.type) {
+                    card.classList.add('active');
+                    appState.selectedLevel = extracted.type;
+                }
+            });
+        }
+    }
+    
+    // Función auxiliar para crear el HTML de resultados con data attributes
+    function createResultHTML(extracted, hasData, missingFields) {
+        let resultHTML = '<div style="margin-bottom: 16px;"><strong>' + translate('ocrDataFound') + '</strong><br>';
+        
+        const ageLabel = appState.currentLang === 'es' ? 'Edad' : appState.currentLang === 'pt' ? 'Idade' : 'Age';
+        const weightLabel = appState.currentLang === 'es' ? 'Peso' : appState.currentLang === 'pt' ? 'Peso' : 'Weight';
+        const heightLabel = appState.currentLang === 'es' ? 'Altura' : appState.currentLang === 'pt' ? 'Altura' : 'Height';
+        const ageUnit = appState.currentLang === 'es' ? 'años' : appState.currentLang === 'pt' ? 'anos' : 'years';
+        
+        if (extracted.age !== null) {
+            resultHTML += `• ${ageLabel}: ${extracted.age} ${ageUnit}<br>`;
+        }
+        
+        if (extracted.weight !== null) {
+            resultHTML += `• ${weightLabel}: ${extracted.weight.toFixed(1)} kg<br>`;
+        }
+        
+        if (extracted.height !== null) {
+            resultHTML += `• ${heightLabel}: ${extracted.height.toFixed(1)} cm<br>`;
+        }
+        
+        const soleLengthLabel = appState.currentLang === 'es' ? 'Largo de Bota' : appState.currentLang === 'pt' ? 'Comprimento da Bota' : 'Boot Sole Length';
+        if (extracted.soleLength !== null) {
+            resultHTML += `• ${soleLengthLabel}: ${extracted.soleLength} mm<br>`;
+        }
+        
+        const typeLabel = appState.currentLang === 'es' ? 'Nivel (Type)' : appState.currentLang === 'pt' ? 'Nível (Type)' : 'Level (Type)';
+        if (extracted.type !== null) {
+            resultHTML += `• ${typeLabel}: TYPE ${extracted.type}<br>`;
+        }
+        
+        resultHTML += '</div>';
+        
+        // Agregar data attributes a los botones para pasar datos
+        const extractedData = JSON.stringify(extracted);
+        const missingFieldsData = JSON.stringify(missingFields);
+        
+        if (!hasData) {
+            // No se encontró ningún dato
+            resultHTML = '<p style="color: #ffa500; margin-bottom: 16px; font-size: 0.9rem;">' + translate('ocrNoDataFound') + '</p>';
+            resultHTML += '<div style="display: flex; gap: 8px; flex-direction: column;">';
+            resultHTML += `<button type="button" class="btn btn-primary-custom ocr-action-btn" id="retryCaptureBtn" style="width: 100%; padding: 12px; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">📷 ${translate('capturePhoto')} Again</button>`;
+            resultHTML += `<button type="button" class="btn btn-secondary-custom ocr-action-btn" id="enterManuallyBtn" data-extracted='${extractedData}' data-missing-fields='${missingFieldsData}' style="width: 100%; padding: 12px; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${translate('enterManually')}</button>`;
+            resultHTML += '</div>';
+        } else {
+            // Hay algunos datos, mostrar botón para usar y otro para ingresar manualmente lo que falta
+            resultHTML += '<div style="display: flex; gap: 8px; flex-direction: column;">';
+            resultHTML += `<button type="button" class="btn btn-primary-custom ocr-action-btn" id="useOCRDataBtn" data-extracted='${extractedData}' style="width: 100%; padding: 12px; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${translate('useRecognizedData')}</button>`;
+            resultHTML += `<button type="button" class="btn btn-secondary-custom ocr-action-btn" id="retryCaptureBtn" style="width: 100%; padding: 12px; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">📷 ${translate('capturePhoto')} Again</button>`;
+            if (missingFields.length > 0) {
+                resultHTML += `<button type="button" class="btn btn-secondary-custom ocr-action-btn" id="enterManuallyBtn" data-extracted='${extractedData}' data-missing-fields='${missingFieldsData}' style="width: 100%; padding: 12px; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${translate('enterManually')}</button>`;
+            }
+            resultHTML += '</div>';
+        }
+        
+        return resultHTML;
+    }
+    
+    // Función para manejar clics en botones dinámicos del resultado de la cámara
+    function handleCameraResultClick(e) {
+        const target = e.target.closest('button');
+        if (!target) return;
+        
+        const buttonId = target.id;
+        let extracted = null;
+        let missingFields = [];
+        
+        // Intentar obtener datos de los data attributes
+        try {
+            if (target.dataset.extracted) {
+                extracted = JSON.parse(target.dataset.extracted);
+            }
+            if (target.dataset.missingFields) {
+                missingFields = JSON.parse(target.dataset.missingFields);
+            }
+        } catch (err) {
+            console.error('Error parsing data attributes:', err);
+        }
+        
+        if (buttonId === 'retryCaptureBtn') {
+            // Reiniciar cámara para capturar de nuevo
+            restartCamera();
+        } else if (buttonId === 'useOCRDataBtn' && extracted) {
+            // Llenar formulario con datos reconocidos
+            fillFormWithExtractedData(extracted);
+            resetCameraModal();
+            cameraModal.style.display = 'none';
+            cameraModal.classList.remove('show');
+        } else if (buttonId === 'enterManuallyBtn') {
+            // Si hay datos parciales, llenar los que se reconocieron
+            if (extracted) {
+                fillFormWithExtractedData(extracted);
+            }
+            
+            // Cerrar modal y volver al inicio
+            resetCameraModal();
+            cameraModal.style.display = 'none';
+            cameraModal.classList.remove('show');
+            
+            // Scroll al inicio del formulario
+            setTimeout(() => {
+                const form = document.getElementById('skiRentalForm');
+                if (form) {
+                    form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 100);
+            
+            // Focus en el primer campo que falta
+            setTimeout(() => {
+                if (missingFields.includes('height')) {
+                    const heightInput = appState.heightUnit === 'ft' 
+                        ? document.getElementById('heightFtIn') 
+                        : document.getElementById('heightCm');
+                    heightInput?.focus();
+                } else if (missingFields.includes('weight')) {
+                    document.getElementById('weight')?.focus();
+                } else if (missingFields.includes('soleLength')) {
+                    document.getElementById('soleLength')?.focus();
+                } else if (missingFields.includes('type')) {
+                    // Abrir sección avanzada si está cerrada
+                    const advancedToggle = document.getElementById('toggleAdvanced');
+                    const advancedContent = document.getElementById('advancedContent');
+                    if (advancedToggle && advancedContent && !advancedContent.classList.contains('show')) {
+                        advancedToggle.click();
+                    }
+                }
+            }, 400);
+        } else if (buttonId === 'tryAgainBtn') {
+            // Reiniciar cámara para intentar de nuevo
+            restartCamera();
+        }
     }
     
     // Inicializar worker de Tesseract
     async function initOCR() {
         if (!ocrWorker) {
             try {
+                console.log('Inicializando OCR worker...');
                 if (ocrStatus) {
                     ocrStatus.textContent = 'Initializing OCR...';
                 }
@@ -1627,29 +1938,51 @@ async function setupCameraMeasurement() {
     
     // Abrir modal de cámara
     if (cameraBtn && cameraModal) {
-        cameraBtn.addEventListener('click', async () => {
-            cameraModal.style.display = 'flex';
-            cameraModal.classList.add('show');
-            // Resetear estado
-            if (cameraInstructionsOverlay) cameraInstructionsOverlay.style.display = 'flex';
-            if (cameraControls) cameraControls.style.display = 'none';
-            if (cameraResult) {
-                cameraResult.style.display = 'none';
-                cameraResult.innerHTML = '';
+        cameraBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            try {
+                console.log('Botón de cámara clickeado');
+                resetCameraModal();
+                cameraModal.style.display = 'flex';
+                cameraModal.classList.add('show');
+                // Inicializar OCR cuando se abre el modal (sin await para no bloquear)
+                initOCR().catch(err => {
+                    console.error('Error inicializando OCR:', err);
+                });
+            } catch (error) {
+                console.error('Error al abrir modal de cámara:', error);
+                alert('Error al abrir la cámara. Por favor, intenta de nuevo.');
             }
-            if (ocrProcessing) ocrProcessing.style.display = 'none';
-            if (cameraVideo) cameraVideo.hidden = true;
-            // Inicializar OCR cuando se abre el modal
-            await initOCR();
         });
+    } else {
+        console.warn('Botón de cámara o modal no encontrado:', { cameraBtn, cameraModal });
+    }
+    
+    // Usar delegación de eventos para manejar botones dinámicos del resultado
+    // Esto se hace una sola vez y funciona para todos los botones dinámicos
+    if (cameraResult) {
+        cameraResult.addEventListener('click', handleCameraResultClick);
     }
     
     // Cerrar modal
     if (closeCameraBtn && cameraModal) {
         closeCameraBtn.addEventListener('click', () => {
-            stopCamera();
+            resetCameraModal();
             cameraModal.style.display = 'none';
             cameraModal.classList.remove('show');
+        });
+    }
+    
+    // Cerrar modal al hacer clic fuera de él
+    if (cameraModal) {
+        cameraModal.addEventListener('click', (e) => {
+            if (e.target === cameraModal && !isProcessing) {
+                resetCameraModal();
+                cameraModal.style.display = 'none';
+                cameraModal.classList.remove('show');
+            }
         });
     }
     
@@ -1657,6 +1990,21 @@ async function setupCameraMeasurement() {
     if (startCameraBtn) {
         startCameraBtn.addEventListener('click', async () => {
             try {
+                console.log('Iniciando cámara...');
+                
+                // Verificar si estamos en HTTPS o localhost
+                const isSecureContext = window.isSecureContext || location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+                if (!isSecureContext) {
+                    alert('⚠️ La cámara requiere HTTPS. Por favor, despliega la aplicación en Vercel o usa un servidor local con HTTPS.');
+                    return;
+                }
+                
+                // Verificar disponibilidad de la API
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    alert('⚠️ Tu navegador no soporta acceso a la cámara. Por favor, usa Chrome, Firefox, Safari o Edge actualizado.');
+                    return;
+                }
+                
                 stream = await navigator.mediaDevices.getUserMedia({ 
                     video: { 
                         facingMode: currentFacingMode,
@@ -1664,15 +2012,55 @@ async function setupCameraMeasurement() {
                         height: { ideal: 1080 }
                     } 
                 });
+                
+                console.log('Cámara iniciada correctamente');
+                
                 if (cameraVideo) {
                     cameraVideo.srcObject = stream;
                     cameraVideo.hidden = false;
+                    // Esperar a que el video esté listo
+                    await new Promise((resolve) => {
+                        if (cameraVideo.readyState >= 2) {
+                            resolve();
+                        } else {
+                            cameraVideo.addEventListener('loadedmetadata', resolve, { once: true });
+                        }
+                    });
                 }
+                
                 // Ocultar overlay de instrucciones y mostrar controles
                 if (cameraInstructionsOverlay) cameraInstructionsOverlay.style.display = 'none';
                 if (cameraControls) cameraControls.style.display = 'flex';
             } catch (error) {
-                alert('Error accessing camera: ' + error.message);
+                console.error('Error accediendo a la cámara:', error);
+                let errorMessage = 'Error accediendo a la cámara: ';
+                
+                if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+                    errorMessage = '⚠️ Permiso de cámara denegado. Por favor, permite el acceso a la cámara en la configuración de tu navegador.';
+                } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+                    errorMessage = '⚠️ No se encontró ninguna cámara. Por favor, conecta una cámara y recarga la página.';
+                } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
+                    errorMessage = '⚠️ La cámara está siendo usada por otra aplicación. Por favor, cierra otras aplicaciones que usen la cámara.';
+                } else if (error.name === 'OverconstrainedError' || error.name === 'ConstraintNotSatisfiedError') {
+                    errorMessage = '⚠️ La cámara no soporta las características solicitadas. Intentando con configuración básica...';
+                    // Intentar con configuración más básica
+                    try {
+                        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                        if (cameraVideo) {
+                            cameraVideo.srcObject = stream;
+                            cameraVideo.hidden = false;
+                        }
+                        if (cameraInstructionsOverlay) cameraInstructionsOverlay.style.display = 'none';
+                        if (cameraControls) cameraControls.style.display = 'flex';
+                        return;
+                    } catch (retryError) {
+                        errorMessage = '⚠️ Error accediendo a la cámara: ' + retryError.message;
+                    }
+                } else {
+                    errorMessage += error.message || error.name || 'Error desconocido';
+                }
+                
+                alert(errorMessage);
             }
         });
     }
@@ -1734,10 +2122,14 @@ async function setupCameraMeasurement() {
     // Capturar foto y procesar con OCR
     if (captureBtn && cameraVideo && cameraCanvas) {
         captureBtn.addEventListener('click', async () => {
+            if (isProcessing) return; // Evitar múltiples clics
+            isProcessing = true;
+            
             if (!ocrWorker) {
                 const initialized = await initOCR();
                 if (!initialized) {
                     alert('Error initializing OCR. Please try again.');
+                    isProcessing = false;
                     return;
                 }
             }
@@ -1770,6 +2162,9 @@ async function setupCameraMeasurement() {
                 cameraVideo.srcObject = null;
                 cameraVideo.hidden = true;
             }
+            
+            // Mantener botón de volver visible para poder regresar
+            // El botón de volver permite cerrar el modal y volver al inicio
             
             // Preprocesar imagen para mejorar OCR
             const imageData = ctx.getImageData(0, 0, cameraCanvas.width, cameraCanvas.height);
@@ -1816,240 +2211,53 @@ async function setupCameraMeasurement() {
                     ocrProcessing.style.display = 'none';
                 }
                 
-                // Mostrar resultados
-                let resultHTML = '<div style="margin-bottom: 16px;"><strong>' + translate('ocrDataFound') + '</strong><br>';
+                // Determinar qué campos faltan
                 let hasData = false;
                 const missingFields = [];
                 
-                const ageLabel = appState.currentLang === 'es' ? 'Edad' : appState.currentLang === 'pt' ? 'Idade' : 'Age';
-                const weightLabel = appState.currentLang === 'es' ? 'Peso' : appState.currentLang === 'pt' ? 'Peso' : 'Weight';
-                const heightLabel = appState.currentLang === 'es' ? 'Altura' : appState.currentLang === 'pt' ? 'Altura' : 'Height';
-                const ageUnit = appState.currentLang === 'es' ? 'años' : appState.currentLang === 'pt' ? 'anos' : 'years';
-                
                 if (extracted.age !== null) {
-                    resultHTML += `• ${ageLabel}: ${extracted.age} ${ageUnit}<br>`;
                     hasData = true;
                 } else {
                     missingFields.push('age');
                 }
                 
                 if (extracted.weight !== null) {
-                    resultHTML += `• ${weightLabel}: ${extracted.weight.toFixed(1)} kg<br>`;
                     hasData = true;
                 } else {
                     missingFields.push('weight');
                 }
                 
                 if (extracted.height !== null) {
-                    resultHTML += `• ${heightLabel}: ${extracted.height.toFixed(1)} cm<br>`;
                     hasData = true;
                 } else {
                     missingFields.push('height');
                 }
                 
-                const soleLengthLabel = appState.currentLang === 'es' ? 'Largo de Bota' : appState.currentLang === 'pt' ? 'Comprimento da Bota' : 'Boot Sole Length';
                 if (extracted.soleLength !== null) {
-                    resultHTML += `• ${soleLengthLabel}: ${extracted.soleLength} mm<br>`;
                     hasData = true;
                 } else {
                     missingFields.push('soleLength');
                 }
                 
-                const typeLabel = appState.currentLang === 'es' ? 'Nivel (Type)' : appState.currentLang === 'pt' ? 'Nível (Type)' : 'Level (Type)';
                 if (extracted.type !== null) {
-                    resultHTML += `• ${typeLabel}: TYPE ${extracted.type}<br>`;
                     hasData = true;
                 } else {
                     missingFields.push('type');
                 }
                 
-                resultHTML += '</div>';
-                
-                if (!hasData) {
-                    // No se encontró ningún dato
-                    resultHTML = '<p style="color: #ffa500; margin-bottom: 16px; font-size: 0.9rem;">' + translate('ocrNoDataFound') + '</p>';
-                    resultHTML += '<button type="button" class="btn btn-secondary-custom ocr-action-btn" id="enterManuallyBtn" style="width: 100%; padding: 12px; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">' + translate('enterManually') + '</button>';
-                } else {
-                    // Hay algunos datos, mostrar botón para usar y otro para ingresar manualmente lo que falta
-                    resultHTML += '<div style="display: flex; gap: 8px; flex-direction: column;">';
-                    resultHTML += '<button type="button" class="btn btn-primary-custom ocr-action-btn" id="useOCRDataBtn" style="width: 100%; padding: 12px; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">' + translate('useRecognizedData') + '</button>';
-                    if (missingFields.length > 0) {
-                        resultHTML += '<button type="button" class="btn btn-secondary-custom ocr-action-btn" id="enterManuallyBtn" style="width: 100%; padding: 12px; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">' + translate('enterManually') + '</button>';
-                    }
-                    resultHTML += '</div>';
-                }
+                // Crear HTML de resultados usando la función auxiliar
+                const resultHTML = createResultHTML(extracted, hasData, missingFields);
                 
                 if (cameraResult) {
                     cameraResult.innerHTML = resultHTML;
                     cameraResult.style.display = 'block';
                 }
                 
-                // Manejar botón de usar datos OCR
-                const useOCRBtn = document.getElementById('useOCRDataBtn');
-                if (useOCRBtn) {
-                    useOCRBtn.addEventListener('click', () => {
-                        // Llenar formulario con datos reconocidos
-                        if (extracted.height !== null) {
-                            if (appState.heightUnit === 'ft') {
-                                const { feet, inches } = converters.cmToFtIn(extracted.height);
-                                const heightFtInInput = document.getElementById('heightFtIn');
-                                if (heightFtInInput) {
-                                    heightFtInInput.value = `${feet}'${inches}"`;
-                                }
-                            } else {
-                                const heightCmInput = document.getElementById('heightCm');
-                                if (heightCmInput) {
-                                    heightCmInput.value = extracted.height.toFixed(1);
-                                }
-                            }
-                        }
-                        
-                        if (extracted.weight !== null) {
-                            const weightInput = document.getElementById('weight');
-                            if (weightInput) {
-                                // Convertir a la unidad actual
-                                if (appState.weightUnit === 'lbs') {
-                                    weightInput.value = converters.kgToLbs(extracted.weight).toFixed(1);
-                                } else {
-                                    weightInput.value = extracted.weight.toFixed(1);
-                                }
-                            }
-                        }
-                        
-                        if (extracted.age !== null) {
-                            // Seleccionar rango de edad apropiado
-                            const ageOptions = document.querySelectorAll('.age-option');
-                            if (extracted.age <= 9) {
-                                appState.selectedAge = 'under10';
-                            } else if (extracted.age >= 50) {
-                                appState.selectedAge = 'over50';
-                            } else {
-                                appState.selectedAge = '10-49';
-                            }
-                            
-                            ageOptions.forEach(opt => {
-                                opt.classList.remove('active');
-                                if (opt.getAttribute('data-age') === appState.selectedAge) {
-                                    opt.classList.add('active');
-                                }
-                            });
-                        }
-                        
-                        if (extracted.soleLength !== null) {
-                            // Llenar campo de largo de bota
-                            const soleLengthInput = document.getElementById('soleLength');
-                            if (soleLengthInput) {
-                                soleLengthInput.value = extracted.soleLength;
-                            }
-                        }
-                        
-                        if (extracted.type !== null) {
-                            // Seleccionar nivel de esquí
-                            const skillLevelCards = document.querySelectorAll('.skill-level-card');
-                            skillLevelCards.forEach(card => {
-                                card.classList.remove('active');
-                                if (card.getAttribute('data-level') === extracted.type) {
-                                    card.classList.add('active');
-                                    appState.selectedLevel = extracted.type;
-                                }
-                            });
-                        }
-                        
-                        stopCamera();
-                        cameraModal.style.display = 'none';
-                        cameraModal.classList.remove('show');
-                    });
-                }
-                
-                // Manejar botón de ingresar manualmente
-                const enterManuallyBtn = document.getElementById('enterManuallyBtn');
-                if (enterManuallyBtn) {
-                    enterManuallyBtn.addEventListener('click', () => {
-                        // Si hay datos parciales, llenar los que se reconocieron
-                        if (extracted.height !== null) {
-                            if (appState.heightUnit === 'ft') {
-                                const { feet, inches } = converters.cmToFtIn(extracted.height);
-                                const heightFtInInput = document.getElementById('heightFtIn');
-                                if (heightFtInInput) heightFtInInput.value = `${feet}'${inches}"`;
-                            } else {
-                                const heightCmInput = document.getElementById('heightCm');
-                                if (heightCmInput) heightCmInput.value = extracted.height.toFixed(1);
-                            }
-                        }
-                        
-                        if (extracted.weight !== null) {
-                            const weightInput = document.getElementById('weight');
-                            if (weightInput) {
-                                if (appState.weightUnit === 'lbs') {
-                                    weightInput.value = converters.kgToLbs(extracted.weight).toFixed(1);
-                                } else {
-                                    weightInput.value = extracted.weight.toFixed(1);
-                                }
-                            }
-                        }
-                        
-                        if (extracted.age !== null) {
-                            const ageOptions = document.querySelectorAll('.age-option');
-                            if (extracted.age <= 9) {
-                                appState.selectedAge = 'under10';
-                            } else if (extracted.age >= 50) {
-                                appState.selectedAge = 'over50';
-                            } else {
-                                appState.selectedAge = '10-49';
-                            }
-                            ageOptions.forEach(opt => {
-                                opt.classList.remove('active');
-                                if (opt.getAttribute('data-age') === appState.selectedAge) {
-                                    opt.classList.add('active');
-                                }
-                            });
-                        }
-                        
-                        if (extracted.soleLength !== null) {
-                            const soleLengthInput = document.getElementById('soleLength');
-                            if (soleLengthInput) soleLengthInput.value = extracted.soleLength;
-                        }
-                        
-                        if (extracted.type !== null) {
-                            const skillLevelCards = document.querySelectorAll('.skill-level-card');
-                            skillLevelCards.forEach(card => {
-                                card.classList.remove('active');
-                                if (card.getAttribute('data-level') === extracted.type) {
-                                    card.classList.add('active');
-                                    appState.selectedLevel = extracted.type;
-                                }
-                            });
-                        }
-                        
-                        stopCamera();
-                        cameraModal.style.display = 'none';
-                        cameraModal.classList.remove('show');
-                        
-                        // Focus en el primer campo que falta
-                        if (missingFields.includes('height')) {
-                            setTimeout(() => {
-                                const heightInput = appState.heightUnit === 'ft' 
-                                    ? document.getElementById('heightFtIn') 
-                                    : document.getElementById('heightCm');
-                                heightInput?.focus();
-                            }, 300);
-                        } else if (missingFields.includes('weight')) {
-                            setTimeout(() => document.getElementById('weight')?.focus(), 300);
-                        } else if (missingFields.includes('soleLength')) {
-                            setTimeout(() => document.getElementById('soleLength')?.focus(), 300);
-                        } else if (missingFields.includes('type')) {
-                            // Abrir sección avanzada si está cerrada
-                            const advancedToggle = document.getElementById('toggleAdvanced');
-                            const advancedContent = document.getElementById('advancedContent');
-                            if (advancedToggle && advancedContent && !advancedContent.classList.contains('show')) {
-                                advancedToggle.click();
-                            }
-                        }
-                    });
-                }
+                isProcessing = false;
                 
             } catch (error) {
                 console.error('OCR Error:', error);
+                isProcessing = false;
                 if (ocrProcessing) ocrProcessing.style.display = 'none';
                 if (ocrStatus) {
                     ocrStatus.textContent = 'Error: ' + error.message;
@@ -2072,48 +2280,9 @@ async function setupCameraMeasurement() {
                     
                     cameraResult.innerHTML = errorHTML;
                     cameraResult.style.display = 'block';
-                    
-                    // Manejar botón de reintentar
-                    const tryAgainBtn = document.getElementById('tryAgainBtn');
-                    if (tryAgainBtn) {
-                        tryAgainBtn.addEventListener('click', () => {
-                            cameraResult.style.display = 'none';
-                            if (cameraControls) cameraControls.style.display = 'flex';
-                        });
-                    }
-                    
-                    // Manejar botón de ingresar manualmente
-                    const enterManuallyBtn = document.getElementById('enterManuallyBtn');
-                    if (enterManuallyBtn) {
-                        enterManuallyBtn.addEventListener('click', () => {
-                            stopCamera();
-                            cameraModal.style.display = 'none';
-                            cameraModal.classList.remove('show');
-                        });
-                    }
                 }
             }
         });
-    }
-    
-    // Detener cámara
-    function stopCamera() {
-        if (stream) {
-            stream.getTracks().forEach(track => track.stop());
-            stream = null;
-        }
-        if (cameraVideo) {
-            cameraVideo.srcObject = null;
-            cameraVideo.hidden = true;
-        }
-        if (startCameraBtn) startCameraBtn.style.display = 'inline-block';
-        if (captureBtn) captureBtn.style.display = 'none';
-        if (stopCameraBtn) stopCameraBtn.style.display = 'none';
-        if (cameraResult) {
-            cameraResult.style.display = 'none';
-            cameraResult.innerHTML = '';
-        }
-        if (ocrProcessing) ocrProcessing.style.display = 'none';
     }
     
     if (stopCameraBtn) {
